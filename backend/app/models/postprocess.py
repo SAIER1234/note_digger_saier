@@ -68,11 +68,17 @@ def postprocess_midi(
 
     # Key detection
     if detect_key:
-        estimated_key = _detect_key_from_notes(midi)
-        if estimated_key is not None:
-            midi._key_signatures = [
-                pretty_midi.KeySignature(estimated_key, 0.0)
-            ]
+        try:
+            estimated_key, confidence = _detect_key_from_notes(midi)
+            # Only set key if confidence is meaningful (correlation > 0.3)
+            if estimated_key is not None and confidence > 0.3:
+                # pretty_midi key_number must be in [-7, 7]
+                clamped_key = max(-7, min(7, int(estimated_key)))
+                midi._key_signatures = [
+                    pretty_midi.KeySignature(clamped_key, 0.0)
+                ]
+        except Exception:
+            pass  # Key detection is best-effort
 
     midi.write(str(output_path))
     return output_path
@@ -139,47 +145,55 @@ def _detect_tempo_from_notes(midi: pretty_midi.PrettyMIDI) -> Optional[float]:
     return best_tempo
 
 
-def _detect_key_from_notes(midi: pretty_midi.PrettyMIDI) -> Optional[int]:
+def _detect_key_from_notes(midi: pretty_midi.PrettyMIDI) -> tuple[Optional[int], float]:
     """
-    Detect key signature from notes.
-    Returns key number (0=C, negative=flats, positive=sharps).
+    Detect key signature from notes using Krumhansl-Schmuckler profiles.
+    Returns (key_number, confidence) where confidence is the best correlation score.
+    key_number: standard MIDI key signature (-7 flats to +7 sharps, 0=C).
     """
     pitch_counts = np.zeros(12)
     for inst in midi.instruments:
         for note in inst.notes:
             pitch_counts[note.pitch % 12] += note.end - note.start
 
-    if pitch_counts.sum() == 0:
-        return None
+    total = pitch_counts.sum()
+    if total == 0:
+        return None, 0.0
 
-    # Krumhansl-Schmuckler key profiles (major)
+    # Krumhansl-Schmuckler key profiles
     major_profile = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
     minor_profile = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
 
-    # Normalize
-    total = pitch_counts.sum()
-    if total > 0:
-        pitch_counts = pitch_counts / total
+    # Normalize pitch counts
+    pitch_counts = pitch_counts / total
 
-    best_corr = -1
+    best_corr = -2.0  # Correlation ranges from -1 to 1
     best_key = 0
 
     for key in range(12):
-        # Rotate major profile
         rotated_major = np.roll(major_profile / major_profile.sum(), key)
         rotated_minor = np.roll(minor_profile / minor_profile.sum(), key)
 
         corr_major = np.corrcoef(pitch_counts, rotated_major)[0, 1]
         corr_minor = np.corrcoef(pitch_counts, rotated_minor)[0, 1]
 
+        # Handle NaN from zero-variance input
+        if np.isnan(corr_major):
+            corr_major = -2.0
+        if np.isnan(corr_minor):
+            corr_minor = -2.0
+
         if corr_major > best_corr:
             best_corr = corr_major
-            best_key = key  # positive = sharps
+            best_key = key  # 0=C, 1=G (1 sharp), 2=D (2 sharps), etc.
         if corr_minor > best_corr:
             best_corr = corr_minor
-            best_key = key - 12  # negative = flats, minor relative
+            best_key = key - 12  # -3=Eb major/C minor (3 flats), etc.
 
-    return best_key
+    if best_corr <= -1.0:
+        return None, 0.0  # No meaningful correlation — skip key setting
+
+    return best_key, float(best_corr)
 
 
 def get_midi_info(midi_path: Path) -> dict:
