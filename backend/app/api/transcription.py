@@ -1,0 +1,171 @@
+"""Transcription API routes — async with progress tracking."""
+
+import shutil
+import threading
+from pathlib import Path
+
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi.responses import JSONResponse
+
+from app.config import MAX_UPLOAD_SIZE_MB, DEV_MODE
+from app.utils.file_storage import generate_task_id, get_upload_path, get_output_dir
+from app.services.youtube import is_supported_url
+
+# In-memory task store (for DEV_MODE progress tracking)
+_task_store: dict = {}
+
+router = APIRouter(prefix="/transcribe", tags=["transcription"])
+
+
+def _run_in_background(task_id: str, source_type: str, source_path: str | None = None, source_url: str | None = None, options: dict | None = None):
+    """Run pipeline in background thread, updating progress in _task_store."""
+    from app.tasks.transcription import _run_pipeline_with_progress
+
+    def progress_callback(stage: str, percent: int):
+        _task_store[task_id] = {"status": "processing", "stage": stage, "percent": percent}
+
+    try:
+        progress_callback("预处理", 5)
+        result = _run_pipeline_with_progress(
+            task_id=task_id,
+            source_type=source_type,
+            source_path=source_path,
+            source_url=source_url,
+            options=options or {},
+            progress_callback=progress_callback,
+        )
+        _task_store[task_id] = result
+    except Exception as e:
+        import traceback
+        _task_store[task_id] = {
+            "task_id": task_id,
+            "status": "failed",
+            "error": str(e),
+            "traceback": traceback.format_exc(),
+        }
+
+
+@router.post("/file")
+async def transcribe_file(
+    file: UploadFile = File(...),
+    model: str = Form("auto"),
+    arrange: bool = Form(False),
+    style: str = Form("broken"),
+    difficulty: str = Form("medium"),
+):
+    """Upload an audio file for transcription."""
+    content = await file.read()
+    size_mb = len(content) / (1024 * 1024)
+    if size_mb > MAX_UPLOAD_SIZE_MB:
+        raise HTTPException(status_code=413, detail=f"文件大小 {size_mb:.1f}MB 超过限制 {MAX_UPLOAD_SIZE_MB}MB")
+
+    task_id = generate_task_id()
+    upload_path = get_upload_path(task_id, file.filename or "audio.wav")
+    upload_path.write_bytes(content)
+
+    if DEV_MODE:
+        _task_store[task_id] = {"status": "queued", "stage": "等待处理", "percent": 0}
+        threading.Thread(
+            target=_run_in_background,
+            args=(task_id, "file", str(upload_path)),
+            kwargs={"options": {"model": model, "arrange": arrange, "style": style, "difficulty": difficulty}},
+            daemon=True,
+        ).start()
+        return JSONResponse({"task_id": task_id, "status": "processing", "stage": "提交成功", "percent": 0})
+    else:
+        from app.tasks.transcription import transcribe_audio_task
+        task = transcribe_audio_task.delay(
+            task_id=task_id, source_type="file",
+            source_path=str(upload_path), options={"model": model},
+        )
+        return JSONResponse({"task_id": task_id, "celery_task_id": task.id, "status": "queued"})
+
+
+@router.post("/url")
+async def transcribe_url(url: str = Form(...), model: str = Form("auto")):
+    """Transcribe from a YouTube or B站 URL."""
+    if not is_supported_url(url):
+        raise HTTPException(status_code=400, detail="不支持的链接，目前支持 YouTube 和 B站")
+
+    task_id = generate_task_id()
+
+    if DEV_MODE:
+        _task_store[task_id] = {"status": "queued", "stage": "等待处理", "percent": 0}
+        threading.Thread(
+            target=_run_in_background,
+            args=(task_id, "url"),
+            kwargs={"source_url": url, "options": {"model": model}},
+            daemon=True,
+        ).start()
+        return JSONResponse({"task_id": task_id, "status": "processing", "stage": "提交成功", "percent": 0})
+    else:
+        from app.tasks.transcription import transcribe_audio_task
+        task = transcribe_audio_task.delay(
+            task_id=task_id, source_type="url", source_url=url, options={"model": model},
+        )
+        return JSONResponse({"task_id": task_id, "celery_task_id": task.id, "status": "queued", "source_url": url})
+
+
+@router.post("/record")
+async def transcribe_recording(file: UploadFile = File(...), model: str = Form("auto")):
+    """Transcribe a microphone recording."""
+    task_id = generate_task_id()
+    upload_path = get_upload_path(task_id, "recording.wav")
+    content = await file.read()
+    upload_path.write_bytes(content)
+
+    if DEV_MODE:
+        _task_store[task_id] = {"status": "queued", "stage": "等待处理", "percent": 0}
+        threading.Thread(
+            target=_run_in_background,
+            args=(task_id, "recording", str(upload_path)),
+            kwargs={"options": {"model": model}},
+            daemon=True,
+        ).start()
+        return JSONResponse({"task_id": task_id, "status": "processing", "stage": "提交成功", "percent": 0})
+    else:
+        from app.tasks.transcription import transcribe_audio_task
+        task = transcribe_audio_task.delay(
+            task_id=task_id, source_type="recording", source_path=str(upload_path), options={"model": model},
+        )
+        return JSONResponse({"task_id": task_id, "celery_task_id": task.id, "status": "queued"})
+
+
+@router.get("/{task_id}")
+async def get_task_status(task_id: str):
+    """Get transcription task status with real-time progress."""
+    # Check in-memory store first (DEV_MODE)
+    if task_id in _task_store:
+        return _task_store[task_id]
+
+    # Check file system for completed tasks
+    output_dir = get_output_dir(task_id)
+    musicxml_path = output_dir / "score.musicxml"
+    midi_path = output_dir / "transcribed_clean.mid"
+
+    if musicxml_path.exists() and midi_path.exists():
+        return {
+            "task_id": task_id,
+            "status": "completed",
+            "midi_url": f"/api/v1/export/{task_id}/midi",
+            "musicxml_url": f"/api/v1/export/{task_id}/musicxml",
+            "percent": 100,
+        }
+
+    error_file = output_dir / "error.txt"
+    if error_file.exists():
+        return {"task_id": task_id, "status": "failed", "error": error_file.read_text()}
+
+    return {"task_id": task_id, "status": "not_found"}
+
+
+@router.delete("/{task_id}")
+async def delete_task(task_id: str):
+    """Delete a transcription task and its files."""
+    from app.config import UPLOAD_DIR, OUTPUT_DIR
+    _task_store.pop(task_id, None)
+    for base in [UPLOAD_DIR, OUTPUT_DIR]:
+        for d in base.rglob(task_id):
+            if d.is_dir():
+                shutil.rmtree(d, ignore_errors=True)
+    return {"status": "deleted", "task_id": task_id}

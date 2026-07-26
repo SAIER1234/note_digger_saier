@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Build
+.next/
+out/
+
+# AI Model files (huge)
+models_data/
+*.safetensors
+
+# Uploaded/output files
+uploads/
+outputs/
+
+# Environment (contains secrets!)
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+*.egg-info/
+dist/
+
+# Test artifacts
+test_piano.wav
+test_piano.processed.wav
+cloud_test_output.mid
+aria-amt-src.tar.gz
+aria-amt-minimal.tar.gz
+aria-amt.tar.gz

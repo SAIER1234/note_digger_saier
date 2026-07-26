@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl:*)",
+      "Bash(cd:d:/GitWarehouse/note_digger_saier/*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(pip:*)",
+      "Bash(python:*)",
+      "Bash(git:*)",
+      "Bash(docker:*)",
+      "Bash(mkdir:*)",
+      "Bash(taskkill:*)",
+      "Bash(wsl:*)",
+      "Bash(ls:*)",
+      "Bash(cp:*)",
+      "Bash(cat:*)",
+      "Bash(echo:*)",
+      "Bash(find:*)",
+      "WebFetch",
+      "WebSearch",
+      "Read",
+      "Glob",
+      "Grep",
+      "Edit(d:/GitWarehouse/note_digger_saier/**)",
+      "Write(d:/GitWarehouse/note_digger_saier/**)"
+    ]
+  }
+}
