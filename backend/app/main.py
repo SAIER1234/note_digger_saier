@@ -86,3 +86,58 @@ async def health_check():
 async def api_health_check():
     """Health check accessible via Nginx /api/ proxy."""
     return {"status": "healthy"}
+
+
+@app.get(f"{API_PREFIX}/system/status")
+async def system_status():
+    """System status: uptime, memory, disk, transcription stats."""
+    import os, time, sqlite3
+    from app.config import BASE_DIR
+
+    # Uptime (from /proc/uptime on Linux)
+    uptime_sec = 0
+    try:
+        with open("/proc/uptime") as f:
+            uptime_sec = float(f.read().split()[0])
+    except Exception:
+        pass
+
+    # Memory
+    mem = {}
+    try:
+        with open("/proc/meminfo") as f:
+            for line in f:
+                if "MemTotal" in line:
+                    mem["total_kb"] = int(line.split()[1])
+                elif "MemAvailable" in line:
+                    mem["available_kb"] = int(line.split()[1])
+    except Exception:
+        pass
+
+    # Disk
+    disk = {}
+    try:
+        stat = os.statvfs(str(BASE_DIR))
+        disk["free_gb"] = round((stat.f_frsize * stat.f_bavail) / (1024**3), 1)
+        disk["total_gb"] = round((stat.f_frsize * stat.f_blocks) / (1024**3), 1)
+    except Exception:
+        pass
+
+    # Transcription count
+    total_uploads = 0
+    try:
+        db = sqlite3.connect(str(BASE_DIR / "note_digger.db"))
+        row = db.execute("SELECT COUNT(*) FROM transcription_history").fetchone()
+        if row:
+            total_uploads = row[0]
+        db.close()
+    except Exception:
+        pass
+
+    return {
+        "status": "healthy",
+        "uptime_hours": round(uptime_sec / 3600, 1),
+        "memory": mem,
+        "disk": disk,
+        "total_transcriptions": total_uploads,
+    }
