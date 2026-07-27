@@ -1,5 +1,10 @@
 # Note Digger — 迭代日志
 
+## Round 18 — 2026-07-28 [system]
+- **方向**: 系统健壮 — 系统状态监控端点
+- **端点**: GET /api/v1/system/status (uptime/mem/disk/转录数)
+- **下轮**: arrangement（饥饿度0.90）
+
 ## Round 17 — 2026-07-28 [quality]
 - **方向**: 转录质量 — 新增流行+爵士基准，共10例
 - **结果**: pop_ballad F1=0.96, jazz_chords F1=1.00
