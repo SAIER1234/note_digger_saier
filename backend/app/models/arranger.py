@@ -4,6 +4,7 @@ Model-agnostic: works on any MIDI output (Basic Pitch, Aria-AMT, etc.)
 Pure rule-based music theory — no ML training needed.
 """
 
+import random
 import numpy as np
 import pretty_midi
 
@@ -21,7 +22,7 @@ STYLES = {
     },
     "broken": {     # Broken chords (ballad style)
         "name": "分解和弦",
-        "pattern": [0, 1, 2, 3, 2, 1],  # root-3rd-5th-octave-5th-3rd
+        "pattern": [0, 1, 2, 3, 2, 1],  # root-3rd-5th-octave-3rd
         "rhythm": 0.5,                    # 8th notes
     },
     "alberti": {    # Alberti bass (Mozart style)
@@ -29,10 +30,10 @@ STYLES = {
         "pattern": [0, 2, 1, 2],   # root-5th-3rd-5th
         "rhythm": 0.25,              # 16th notes
     },
-    "waltz": {      # Waltz: bass-chord-chord (oom-pah-pah)
+    "waltz": {      # Waltz: bass-chord-chord (oom-pah-pah) in 3/4
         "name": "华尔兹",
-        "pattern": [-1, 0, 1, 2, 0, 1, 2],  # bass note (-1) then chord notes
-        "rhythm": 0.25,                       # 8th note triplets feel
+        "pattern": [-1, 99, 99],    # -1=bass, 99=full chord (special marker)
+        "rhythm": 0.5,               # beat duration in 3/4 (quarter = 0.5s at 120bpm)
     },
 }
 
@@ -47,6 +48,9 @@ CHORD_PATTERNS = {
 }
 
 NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+
+# All inversions to try for voice leading (which chord tone goes in the bass)
+INVERSIONS = [0, 1, 2, 3]  # root, 1st, 2nd, 3rd inversion
 
 
 def extract_melody(midi: pretty_midi.PrettyMIDI, split_pitch: int = 60) -> tuple[list, list]:
@@ -81,13 +85,55 @@ def extract_melody(midi: pretty_midi.PrettyMIDI, split_pitch: int = 60) -> tuple
     return melody_notes, harmony_notes
 
 
+def _find_smoothest_voicing(chord_intervals: list[int], root_pc: int, prev_pitches: list[int]) -> list[int]:
+    """Find the voicing (inversion + octave placement) that minimizes
+    total semitone distance from the previous chord's pitches.
+
+    This implements voice leading — smooth transitions between chords.
+    """
+    if not prev_pitches or len(chord_intervals) <= 1:
+        # First chord or single-note: use root position in octave 3
+        return [root_pc + 12 * 3 + i for i in chord_intervals]
+
+    best_voicing = None
+    best_distance = float("inf")
+
+    # Try each inversion
+    for inv in range(len(chord_intervals)):
+        # Rotate intervals to create inversion
+        rotated = chord_intervals[inv:] + [i + 12 for i in chord_intervals[:inv]]
+
+        # Try octave placements — keep within bass range (MIDI 28-65)
+        for octave_base in [24, 36, 48]:
+            voicing = [root_pc + octave_base + i for i in rotated]
+            # Clamp to playable LH range
+            voicing = [max(28, min(67, v)) for v in voicing]
+
+            # Calculate total distance to previous pitches (greedy matching)
+            prev_sorted = sorted(prev_pitches)
+            voicing_sorted = sorted(voicing)
+            total_dist = sum(abs(v - p) for v, p in zip(voicing_sorted, prev_sorted))
+
+            if total_dist < best_distance:
+                best_distance = total_dist
+                best_voicing = voicing
+
+    return best_voicing if best_voicing else [root_pc + 12 * 3 + i for i in chord_intervals]
+
+
 def generate_accompaniment(
     chords: list[dict],
     style: str = "broken",
     bpm: float = 120.0,
     velocity: int = 60,
 ) -> list[pretty_midi.Note]:
-    """Generate left-hand accompaniment notes based on chord progression and style."""
+    """Generate left-hand accompaniment notes based on chord progression and style.
+
+    Features:
+    - Voice leading: chords transition smoothly by choosing nearest inversion
+    - Waltz: proper 3/4 bass-chord-chord with chord clusters
+    - Dynamics arc: crescendo to middle, decrescendo to end
+    """
     if style not in STYLES:
         style = "broken"
 
@@ -98,13 +144,21 @@ def generate_accompaniment(
     note_duration = beat_duration * rhythm
 
     acc_notes = []
+    prev_voicing = []  # Track previous chord's pitches for voice leading
+    is_waltz = (style == "waltz")
+
+    # Calculate total duration for dynamics arc
+    if chords:
+        total_duration = chords[-1]["end"] - chords[0]["start"]
+    else:
+        total_duration = 0
+
     for chord_info in chords:
         chord_name = chord_info["chord"]
         start_time = chord_info["start"]
         end_time = chord_info["end"]
 
-        # Parse chord: "C", "Am", "G7", "F#m", "Bb" etc.
-        # Known chord quality suffixes (sorted longest first for matching)
+        # Parse chord root and quality
         known_suffixes = ["maj7", "m7b5", "m7", "m6", "m", "sus4", "dim", "aug", "7", "6"]
         root_str = chord_name
         suffix = ""
@@ -113,49 +167,94 @@ def generate_accompaniment(
                 root_str = chord_name[:-len(s)]
                 suffix = s
                 break
-        # Extract root note
         root_pc = _note_name_to_pc(root_str) if root_str else 0
 
         # Get chord intervals
         intervals = CHORD_PATTERNS.get(suffix, CHORD_PATTERNS[""])
 
-        # Build chord notes in octave 3 (C3-B3 = MIDI 48-59)
-        base_octave = 3
-        chord_midi = [root_pc + 12 * base_octave + interval for interval in intervals]
-        # Keep in bass range (MIDI 36-60)
-        chord_midi = [max(36, min(60, m)) for m in chord_midi]
+        # Find best voicing via voice leading
+        chord_voicing = _find_smoothest_voicing(intervals, root_pc, prev_voicing)
 
-        # Apply pattern with velocity dynamics
-        t = start_time
-        pattern_idx = 0
-        while t < end_time:
-            step = pattern[pattern_idx % len(pattern)]
-            if step < len(chord_midi):
-                # Handle special pattern indices
-                if step == -1:  # Bass note one octave below root
-                    midi_pitch = chord_midi[0] - 12
-                elif step < len(chord_midi):
-                    midi_pitch = chord_midi[step]
-                else:
-                    t += note_duration
-                    pattern_idx += 1
-                    continue
-                # Velocity variation: accent on downbeats, softer on upbeats
-                is_downbeat = (pattern_idx % len(pattern) == 0)
-                base_vel = velocity + 5 if is_downbeat else velocity - 3
-                # Add micro-variation for human feel (±3)
-                import random
-                vel = max(30, min(100, base_vel + random.randint(-3, 3)))
-                acc_notes.append(pretty_midi.Note(
-                    velocity=vel,
-                    pitch=midi_pitch,
-                    start=t,
-                    end=min(t + note_duration * 0.9, end_time),
-                ))
-            t += note_duration
-            pattern_idx += 1
-            if t + note_duration > end_time:
-                break
+        # Dynamics arc: velocity curve based on position in piece
+        if total_duration > 0:
+            piece_position = (start_time - chords[0]["start"]) / total_duration
+            # Arc: start 0.85 → peak 1.1 at 0.6 → end 0.75
+            if piece_position < 0.6:
+                arc_mult = 0.85 + piece_position * (1.1 - 0.85) / 0.6
+            else:
+                arc_mult = 1.1 - (piece_position - 0.6) * (1.1 - 0.75) / 0.4
+        else:
+            arc_mult = 1.0
+
+        # Generate pattern
+        if is_waltz:
+            # Waltz: bass on beat 1, full chord on beats 2 and 3
+            # 3/4 time: each beat = beat_duration, pattern has 3 beats per bar
+            bar_duration = beat_duration * 3  # 3 beats per bar
+            t = start_time
+            while t < end_time:
+                for beat_in_bar in range(3):
+                    beat_time = t + beat_in_bar * beat_duration
+                    if beat_time >= end_time:
+                        break
+
+                    is_downbeat = (beat_in_bar == 0)
+                    base_vel = velocity + 8 if is_downbeat else velocity - 2
+                    vel = max(30, min(100, int(base_vel * arc_mult) + random.randint(-2, 2)))
+
+                    if beat_in_bar == 0:
+                        # Beat 1: bass note (root, one octave below)
+                        bass_pitch = chord_voicing[0] - 12
+                        acc_notes.append(pretty_midi.Note(
+                            velocity=vel, pitch=max(24, bass_pitch),
+                            start=beat_time,
+                            end=min(beat_time + beat_duration * 0.85, end_time),
+                        ))
+                    else:
+                        # Beats 2 & 3: full chord (all voicing notes together)
+                        for vp in chord_voicing:
+                            acc_notes.append(pretty_midi.Note(
+                                velocity=vel, pitch=vp,
+                                start=beat_time,
+                                end=min(beat_time + beat_duration * 0.7, end_time),
+                            ))
+                t += bar_duration
+
+            # Update voice leading state
+            prev_voicing = list(chord_voicing)
+
+        else:
+            # Standard pattern-based styles (broken, arpeggio, block, alberti)
+            t = start_time
+            pattern_idx = 0
+            chord_notes_played = []  # Track notes played in this chord for voice leading
+
+            while t < end_time:
+                step = pattern[pattern_idx % len(pattern)]
+                if step < len(chord_voicing):
+                    midi_pitch = chord_voicing[step]
+                    chord_notes_played.append(midi_pitch)
+
+                    # Velocity: accent on downbeats, softer on upbeats
+                    is_downbeat = (pattern_idx % len(pattern) == 0)
+                    base_vel = velocity + 5 if is_downbeat else velocity - 3
+                    vel = max(30, min(100, int(base_vel * arc_mult) + random.randint(-3, 3)))
+
+                    acc_notes.append(pretty_midi.Note(
+                        velocity=vel,
+                        pitch=midi_pitch,
+                        start=t,
+                        end=min(t + note_duration * 0.9, end_time),
+                    ))
+                t += note_duration
+                pattern_idx += 1
+                if t + note_duration > end_time:
+                    break
+
+            # Update voice leading state for next chord
+            if chord_notes_played:
+                # Use unique pitches as the "voicing" for distance calculation
+                prev_voicing = sorted(set(chord_notes_played))
 
     return acc_notes
 
@@ -171,7 +270,7 @@ def arrange_piano(
     Full piano arrangement:
     1. Extract melody (right hand)
     2. Detect chords
-    3. Generate accompaniment (left hand)
+    3. Generate accompaniment with voice leading (left hand)
     4. Combine into piano MIDI
     """
     midi = pretty_midi.PrettyMIDI(midi_path)
