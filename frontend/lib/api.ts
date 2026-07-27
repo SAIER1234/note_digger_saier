@@ -14,7 +14,7 @@ export function getApiBase(): string {
   }
   return DEFAULT_API_BASE
 }
-const API_PREFIX = "/api/v1"
+export const API_PREFIX = "/api/v1"
 
 async function request<T>(
   endpoint: string,

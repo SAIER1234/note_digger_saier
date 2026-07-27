@@ -1,6 +1,6 @@
 // Frontend auth client — login, register, token management.
 
-import { getApiBase } from './api'
+import { getApiBase, API_PREFIX } from './api'
 
 const TOKEN_KEY = 'nd_token'
 const USER_KEY = 'nd_user'
@@ -50,7 +50,7 @@ function cacheUser(user: User): void {
 
 export async function register(email: string, password: string): Promise<{ token: string; user: User }> {
   const base = getApiBase()
-  const res = await fetch(`${base}/auth/register`, {
+  const res = await fetch(`${base}${API_PREFIX}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -69,7 +69,7 @@ export async function register(email: string, password: string): Promise<{ token
 
 export async function login(email: string, password: string): Promise<{ token: string; user: User }> {
   const base = getApiBase()
-  const res = await fetch(`${base}/auth/login`, {
+  const res = await fetch(`${base}${API_PREFIX}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -91,7 +91,7 @@ export async function fetchMe(): Promise<User | null> {
   if (!token) return null
 
   const base = getApiBase()
-  const res = await fetch(`${base}/auth/me/token/${token}`)
+  const res = await fetch(`${base}${API_PREFIX}/auth/me/token/${token}`)
   if (!res.ok) {
     clearToken()
     return null
@@ -107,7 +107,7 @@ export async function activatePro(code: string): Promise<{ token: string; user: 
   if (!token) throw new Error('请先登录')
 
   const base = getApiBase()
-  const res = await fetch(`${base}/auth/activate/token/${token}/code/${encodeURIComponent(code)}`, {
+  const res = await fetch(`${base}${API_PREFIX}/auth/activate/token/${token}/code/${encodeURIComponent(code)}`, {
     method: 'POST',
   })
 
@@ -127,7 +127,7 @@ export async function getHistory(): Promise<any[]> {
   if (!token) return []
 
   const base = getApiBase()
-  const res = await fetch(`${base}/auth/history/${token}`)
+  const res = await fetch(`${base}${API_PREFIX}/auth/history/${token}`)
   if (!res.ok) return []
 
   const data = await res.json()
