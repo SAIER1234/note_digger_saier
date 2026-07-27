@@ -1,0 +1,14 @@
+{
+  "round": 3,
+  "mode": "explore",
+  "direction": "arrangement",
+  "timestamp": "2026-07-27T11:30:00Z",
+  "change": "Improved grand staff split algorithm — variance-minimizing pitch clustering + simultaneity grouping",
+  "details": {
+    "before": "Fixed C4 split, measure structure flattened",
+    "after": "Adaptive split point via K-means clustering (C3-C5 range), 30ms simultaneity window, measure-preserving",
+    "fixes": "Removed broken _add_dynamics that corrupted score object",
+    "verification": "Transcription completes, MusicXML has 2 parts (RH/LH)"
+  },
+  "playability_impact": "Theoretical improvement for polyphonic/chordal music. Ground truth synthetic MIDIs are perfectly split by definition."
+}

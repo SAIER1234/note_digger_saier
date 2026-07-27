@@ -1,8 +1,8 @@
 {
   "loop_version": 2,
-  "round": 2,
+  "round": 3,
   "mode": "explore",
-  "last_completed": "2026-07-27T09:00:00Z",
+  "last_completed": "2026-07-27T11:30:00Z",
   "first_started": "2026-07-27T08:30:00Z",
   "directions": {
     "quality": {
@@ -10,14 +10,14 @@
       "status": "active",
       "consecutive_low_impact": 0,
       "best_f1": 0.9009,
-      "notes": "F1=0.901 (+7.8%). Medium preset onset=0.6/frame=0.4/min_len=50ms. Fast notes fixed. Chords/arp still have FP from overtones. Next: adaptive preset."
+      "notes": "F1=0.901 (+7.8%). Medium preset onset=0.6/frame=0.4/min_len=50ms. Fast notes fixed. Chords/arp still have FP from overtones."
     },
     "arrangement": {
-      "last_round": null,
+      "last_round": 3,
       "status": "active",
       "consecutive_low_impact": 0,
       "best_playability": null,
-      "notes": "4 styles implemented. Need playability scoring."
+      "notes": "Smart grand staff split: variance-minimizing clustering + simultaneity grouping. 2-part MusicXML verified."
     },
     "ux": {
       "last_round": null,
