@@ -1,7 +1,9 @@
 import type { TranscriptionResult, UploadResponse } from "./types"
 import { getToken } from "./auth"
 
-const DEFAULT_API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+// Production: use relative paths (Nginx handles routing)
+// Development: set NEXT_PUBLIC_API_URL=http://localhost:8002 in .env.local
+const DEFAULT_API_BASE = process.env.NEXT_PUBLIC_API_URL || ""
 
 export function getApiBase(): string {
   // Allow runtime override via URL param ?api=http://...

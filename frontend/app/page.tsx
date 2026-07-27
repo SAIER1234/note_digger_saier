@@ -8,7 +8,7 @@ import { UrlInput } from "@/components/upload/UrlInput"
 import { Recorder } from "@/components/upload/Recorder"
 import { AuthModal } from "@/components/auth/AuthModal"
 import { UserMenu } from "@/components/auth/UserMenu"
-import { uploadFile, transcribeUrl, uploadRecording } from "@/lib/api"
+import { uploadFile, transcribeUrl, uploadRecording, getApiBase } from "@/lib/api"
 import { getFreeUsesRemaining, getTierLabel } from "@/lib/freemium"
 import { getCachedUser, fetchMe, canTranscribe, getUsageDisplay, type User } from "@/lib/auth"
 
@@ -39,9 +39,9 @@ export default function Home() {
   useEffect(() => {
     setTierLabel(getTierLabel())
     // Check backend connectivity
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/`)
+    fetch(`${getApiBase()}/api/v1/health`)
       .then(r => r.json())
-      .then(() => setBackendOnline(true))
+      .then(d => setBackendOnline(d?.status === "healthy"))
       .catch(() => setBackendOnline(false))
     // Restore auth from localStorage
     const cached = getCachedUser()
