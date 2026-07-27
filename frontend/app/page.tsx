@@ -51,12 +51,8 @@ export default function Home() {
   }, [])
 
   const handleFileSelect = async (file: File) => {
-    // Check auth
-    if (!user) {
-      setShowAuth(true)
-      return
-    }
-    if (!canTranscribe(user)) {
+    // Logged-in users with Pro check; anonymous users get free device-based trial
+    if (user && !canTranscribe(user)) {
       toast.error("免费试用已达上限，请升级 Pro")
       return
     }
@@ -71,11 +67,7 @@ export default function Home() {
   }
 
   const handleUrlSubmit = async (url: string) => {
-    if (!user) {
-      setShowAuth(true)
-      return
-    }
-    if (!canTranscribe(user)) {
+    if (user && !canTranscribe(user)) {
       toast.error("免费试用已达上限，请升级 Pro")
       return
     }
@@ -90,11 +82,7 @@ export default function Home() {
   }
 
   const handleRecordingComplete = async (blob: Blob) => {
-    if (!user) {
-      setShowAuth(true)
-      return
-    }
-    if (!canTranscribe(user)) {
+    if (user && !canTranscribe(user)) {
       toast.error("免费试用已达上限，请升级 Pro")
       return
     }
