@@ -92,18 +92,26 @@ export default function TranscriptionPage() {
 
       {/* Error state */}
       {status === "failed" && (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
+        <div className="flex flex-col items-center justify-center py-16 md:py-24 text-center px-4">
           <div className="w-16 h-16 rounded-full bg-[var(--error)]/10 flex items-center justify-center mb-4">
             <Music className="w-8 h-8 text-[var(--error)]" />
           </div>
-          <h2 className="text-xl font-semibold mb-2">扒谱失败</h2>
-          <p className="text-sm text-[var(--text-muted)] mb-4 max-w-md">{error}</p>
-          <button
-            onClick={() => router.push("/")}
-            className="px-6 py-2.5 rounded-xl bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)] transition-colors cursor-pointer"
-          >
-            重新上传
-          </button>
+          <h2 className="text-lg md:text-xl font-semibold mb-2">扒谱失败</h2>
+          <p className="text-sm text-[var(--text-muted)] mb-6 max-w-md">{error || "未知错误"}</p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => router.push("/")}
+              className="px-6 py-2.5 rounded-xl bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)] transition-colors cursor-pointer text-sm"
+            >
+              重新上传
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-2.5 rounded-xl bg-[var(--surface)] text-[var(--text)] border border-[var(--surface-light)] hover:bg-[var(--surface-light)] transition-colors cursor-pointer text-sm"
+            >
+              重试此任务
+            </button>
+          </div>
         </div>
       )}
 
@@ -112,7 +120,7 @@ export default function TranscriptionPage() {
         <div className="space-y-6 animate-fade-in">
           {/* Metadata bar */}
           {result?.metadata && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
               {[
                 { label: "音符数", value: result.metadata.total_notes ?? "-" },
                 { label: "时长", value: formatDuration(result.metadata.duration_seconds ?? 0) },
@@ -121,7 +129,7 @@ export default function TranscriptionPage() {
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="bg-[var(--surface)] rounded-xl p-3 text-center"
+                  className="bg-[var(--surface)] rounded-xl p-2.5 md:p-3 text-center"
                 >
                   <p className="text-xs text-[var(--text-muted)]">{item.label}</p>
                   <p className="text-sm font-semibold text-[var(--text)] mt-0.5">
@@ -129,6 +137,19 @@ export default function TranscriptionPage() {
                   </p>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Arrangement badge */}
+          {result?.arranged && (
+            <div className="flex items-center gap-2 bg-[var(--accent)]/10 border border-[var(--accent)]/20 rounded-xl px-4 py-3">
+              <span className="text-lg">🎹</span>
+              <div>
+                <p className="text-sm font-medium text-[var(--accent)]">自动编曲已启用</p>
+                <p className="text-xs text-[var(--text-muted)]">
+                  风格: {result.style === "broken" ? "分解和弦" : result.style === "arpeggio" ? "琶音" : result.style === "block" ? "柱式和弦" : result.style === "alberti" ? "阿尔贝蒂低音" : result.style}
+                </p>
+              </div>
             </div>
           )}
 
@@ -152,35 +173,22 @@ export default function TranscriptionPage() {
           </div>
 
           {/* Export buttons */}
-          <div className="flex flex-wrap gap-3 justify-center">
-            <button
-              onClick={() => handleExport(getPdfUrl(taskId), "PDF 谱面")}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-light)] transition-all cursor-pointer text-sm"
-            >
-              <FileText className="w-4 h-4" />
-              导出 PDF
-            </button>
-            <button
-              onClick={() => handleExport(getMusicXmlUrl(taskId), "MusicXML")}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-light)] transition-all cursor-pointer text-sm"
-            >
-              <FileType className="w-4 h-4" />
-              导出 MusicXML
-            </button>
-            <button
-              onClick={() => handleExport(getMidiUrl(taskId), "MIDI")}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-light)] transition-all cursor-pointer text-sm"
-            >
-              <Music className="w-4 h-4" />
-              导出 MIDI
-            </button>
-            <button
-              onClick={() => handleExport(getAudioUrl(taskId), "MP3 音频")}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-light)] transition-all cursor-pointer text-sm"
-            >
-              <Volume2 className="w-4 h-4" />
-              导出 MP3
-            </button>
+          <div className="grid grid-cols-2 md:flex md:flex-wrap gap-2 md:gap-3 justify-center">
+            {[
+              { url: getPdfUrl(taskId), label: "PDF 谱面", icon: FileText },
+              { url: getMusicXmlUrl(taskId), label: "MusicXML", icon: FileType },
+              { url: getMidiUrl(taskId), label: "MIDI", icon: Music },
+              { url: getAudioUrl(taskId), label: "MP3", icon: Volume2 },
+            ].map(({ url, label, icon: Icon }) => (
+              <button
+                key={label}
+                onClick={() => handleExport(url, label)}
+                className="flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 rounded-xl bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-light)] transition-all cursor-pointer text-xs md:text-sm"
+              >
+                <Icon className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                {label}
+              </button>
+            ))}
           </div>
         </div>
       )}
