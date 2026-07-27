@@ -1,5 +1,11 @@
 # Note Digger — 迭代日志
 
+## Round 6 — 2026-07-27 [arr]
+- **方向**: 编曲质量 — 自动速度检测替代硬编码 120 BPM
+- **改进**: chord_detect 和 arrange_piano 现在使用 detected tempo
+- **效果**: 和弦窗口更准，减少假阳性，tempo 42→151 BPM 更合理
+- **下轮**: System（饥饿度最高，从未跑过）
+
 ## Round 5 — 2026-07-27 [quality]
 - **方向**: 转录质量 — chord/arranger 回归测试 + 三 bug 修复
 - **bugfix**: chord_detect 存元组误用属性、arranger rstrip 洗掉升降号、MusicXML 编曲前生成

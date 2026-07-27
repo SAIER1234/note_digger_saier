@@ -1,0 +1,9 @@
+{
+  "round": 6,
+  "mode": "explore",
+  "direction": "arrangement",
+  "timestamp": "2026-07-27T13:30:00Z",
+  "change": "Auto-detect tempo for chord detection and arrangement (was hardcoded 120 BPM)",
+  "impact": "Chord windows now sized by actual tempo. Previously: 42/213 BPM wild swings. Now: 151 BPM stable. Fewer false chord detections.",
+  "verification": "E2E: tempo=151.1, chords=C|C6|Csus4, arranged=true, 2 tracks"
+}

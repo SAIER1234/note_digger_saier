@@ -1,8 +1,8 @@
 {
   "loop_version": 2,
-  "round": 5,
+  "round": 6,
   "mode": "explore",
-  "last_completed": "2026-07-27T12:35:00Z",
+  "last_completed": "2026-07-27T13:30:00Z",
   "first_started": "2026-07-27T08:30:00Z",
   "directions": {
     "quality": {
@@ -13,11 +13,11 @@
       "notes": "F1=0.901 on synthetic. Chord detect regression tests added. Real audio quality needs benchmark with harmonics."
     },
     "arrangement": {
-      "last_round": 3,
+      "last_round": 6,
       "status": "active",
       "consecutive_low_impact": 0,
       "best_playability": null,
-      "notes": "Smart grand staff split: variance-minimizing clustering + simultaneity grouping. 2-part MusicXML verified."
+      "notes": "Auto-detect tempo for chord detection. 3 major bugs fixed (chord_detect/arranger/MusicXML). 2-part arranged output verified."
     },
     "ux": {
       "last_round": 4,

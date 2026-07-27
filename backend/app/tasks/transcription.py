@@ -3,6 +3,8 @@
 import traceback
 from pathlib import Path
 
+import pretty_midi
+
 from app.tasks.celery_app import celery_app
 from app.services.audio import preprocess_audio, validate_audio
 from app.services.midi_to_xml import midi_to_musicxml
@@ -74,8 +76,18 @@ def _run_pipeline_with_progress(
 
         # Step 5.5: Chord detection (needed for arrangement)
         cb("分析和弦…", 75)
+        # Detect tempo from MIDI for accurate chord window sizing
+        detected_bpm = 120.0
         try:
-            chords = detect_chords(str(clean_midi_path))
+            midi_temp = pretty_midi.PrettyMIDI(str(clean_midi_path))
+            detected_bpm = midi_temp.estimate_tempo()
+            if detected_bpm <= 0 or detected_bpm > 300:
+                detected_bpm = 120.0
+        except Exception:
+            detected_bpm = 120.0
+
+        try:
+            chords = detect_chords(str(clean_midi_path), bpm=detected_bpm)
             chord_line = format_chord_line(chords)
         except Exception:
             chords = []
@@ -95,6 +107,7 @@ def _run_pipeline_with_progress(
                     str(arranged_path),
                     style=arrange_style,
                     difficulty=arrange_diff,
+                    bpm=detected_bpm,
                 )
                 clean_midi_path = arranged_path  # Use arranged version for sheet music
             except Exception as e:
