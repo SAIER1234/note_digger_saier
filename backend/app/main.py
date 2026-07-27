@@ -37,6 +37,7 @@ app.add_middleware(
         "http://127.0.0.1:5000",
         "http://localhost:5050",
         "http://127.0.0.1:5050",
+        "http://112.124.56.83",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -60,4 +61,10 @@ async def root():
 
 @app.get("/health")
 async def health_check():
+    return {"status": "healthy"}
+
+
+@app.get(f"{API_PREFIX}/health")
+async def api_health_check():
+    """Health check accessible via Nginx /api/ proxy."""
     return {"status": "healthy"}
