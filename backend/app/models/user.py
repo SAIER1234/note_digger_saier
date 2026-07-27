@@ -178,14 +178,37 @@ def record_transcription(user_id: int, task_id: str, filename: str = "", engine:
 
 
 def get_user_history(user_id: int, limit: int = 50) -> list[dict]:
-    """Get user's transcription history."""
+    """Get user's transcription history enriched with metadata from filesystem."""
+    from pathlib import Path
+    from app.utils.file_storage import get_output_dir
+
     db = _get_db()
     try:
         rows = db.execute(
             "SELECT * FROM transcription_history WHERE user_id = ? ORDER BY created_at DESC LIMIT ?",
             (user_id, limit),
         ).fetchall()
-        return [dict(r) for r in rows]
+        result = []
+        for r in rows:
+            item = dict(r)
+            # Try to read metadata from output directory
+            try:
+                output_dir = get_output_dir(item["task_id"])
+                clean_midi = output_dir / "transcribed_clean.mid"
+                arranged_midi = output_dir / "arranged.mid"
+                musicxml = output_dir / "score.musicxml"
+
+                if clean_midi.exists():
+                    import pretty_midi
+                    midi = pretty_midi.PrettyMIDI(str(clean_midi))
+                    item["note_count"] = sum(len(i.notes) for i in midi.instruments)
+                    item["duration_sec"] = round(midi.get_end_time(), 1)
+                item["has_arranged"] = arranged_midi.exists()
+                item["has_sheet"] = musicxml.exists()
+            except Exception:
+                pass
+            result.append(item)
+        return result
     finally:
         db.close()
 

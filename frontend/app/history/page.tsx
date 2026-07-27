@@ -89,20 +89,26 @@ export default function HistoryPage() {
               href={`/transcription/${item.task_id}`}
               className="flex items-center justify-between bg-[var(--surface)] border border-[var(--surface-light)] rounded-xl p-4 hover:border-[var(--primary-light)] hover:bg-[var(--surface-light)]/50 transition-all cursor-pointer"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[var(--surface-light)] flex items-center justify-center text-lg">
-                  🎼
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="w-10 h-10 rounded-lg bg-[var(--surface-light)] flex items-center justify-center text-lg shrink-0">
+                  {item.has_arranged ? "🎹" : "🎼"}
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-[var(--text)]">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[var(--text)] truncate">
                     {item.original_filename || "未命名"}
                   </p>
                   <p className="text-xs text-[var(--text-muted)]">
-                    {item.engine || "auto"} · {new Date(item.created_at).toLocaleDateString("zh-CN")}
+                    {item.engine || "auto"}
+                    {item.note_count ? ` · ${item.note_count} 音符` : ""}
+                    {item.duration_sec ? ` · ${item.duration_sec}s` : ""}
+                    {item.has_arranged ? " · 已编曲" : ""}
+                  </p>
+                  <p className="text-xs text-[var(--text-muted)] opacity-60">
+                    {new Date(item.created_at).toLocaleDateString("zh-CN")}
                   </p>
                 </div>
               </div>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[var(--text-muted)]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[var(--text-muted)] shrink-0">
                 <path d="m9 18 6-6-6-6"/>
               </svg>
             </Link>
