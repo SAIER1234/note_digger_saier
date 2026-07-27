@@ -1,8 +1,9 @@
 import type { TranscriptionResult, UploadResponse } from "./types"
+import { getToken } from "./auth"
 
 const DEFAULT_API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
-function getApiBase(): string {
+export function getApiBase(): string {
   // Allow runtime override via URL param ?api=http://...
   if (typeof window !== "undefined") {
     const params = new URLSearchParams(window.location.search)
@@ -41,6 +42,9 @@ export async function uploadFile(
   const form = new FormData()
   form.append("file", file)
   form.append("model", model)
+  // Include auth token if logged in
+  const token = getToken()
+  if (token) form.append("token", token)
   if (arrange) {
     form.append("arrange", "true")
     form.append("style", style)

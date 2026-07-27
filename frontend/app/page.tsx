@@ -6,8 +6,11 @@ import { toast } from "sonner"
 import { FileUpload } from "@/components/upload/FileUpload"
 import { UrlInput } from "@/components/upload/UrlInput"
 import { Recorder } from "@/components/upload/Recorder"
+import { AuthModal } from "@/components/auth/AuthModal"
+import { UserMenu } from "@/components/auth/UserMenu"
 import { uploadFile, transcribeUrl, uploadRecording } from "@/lib/api"
 import { getFreeUsesRemaining, getTierLabel } from "@/lib/freemium"
+import { getCachedUser, fetchMe, canTranscribe, getUsageDisplay, type User } from "@/lib/auth"
 
 type InputMode = "file" | "url" | "record"
 type ModelChoice = "auto" | "aria-amt" | "basic-pitch" | "simple"
@@ -29,6 +32,10 @@ export default function Home() {
   const [arrange, setArrange] = useState(false)
   const [arrStyle, setArrStyle] = useState("broken")
 
+  // Auth state
+  const [user, setUser] = useState<User | null>(null)
+  const [showAuth, setShowAuth] = useState(false)
+
   useEffect(() => {
     setTierLabel(getTierLabel())
     // Check backend connectivity
@@ -36,9 +43,23 @@ export default function Home() {
       .then(r => r.json())
       .then(() => setBackendOnline(true))
       .catch(() => setBackendOnline(false))
+    // Restore auth from localStorage
+    const cached = getCachedUser()
+    if (cached) setUser(cached)
+    // Then verify with server
+    fetchMe().then(u => { if (u) setUser(u) })
   }, [])
 
   const handleFileSelect = async (file: File) => {
+    // Check auth
+    if (!user) {
+      setShowAuth(true)
+      return
+    }
+    if (!canTranscribe(user)) {
+      toast.error("免费试用已达上限，请升级 Pro")
+      return
+    }
     setLoading(true)
     try {
       const result = await uploadFile(file, model, arrange, arrStyle)
@@ -50,6 +71,14 @@ export default function Home() {
   }
 
   const handleUrlSubmit = async (url: string) => {
+    if (!user) {
+      setShowAuth(true)
+      return
+    }
+    if (!canTranscribe(user)) {
+      toast.error("免费试用已达上限，请升级 Pro")
+      return
+    }
     setLoading(true)
     try {
       const result = await transcribeUrl(url, model, arrange, arrStyle)
@@ -61,6 +90,14 @@ export default function Home() {
   }
 
   const handleRecordingComplete = async (blob: Blob) => {
+    if (!user) {
+      setShowAuth(true)
+      return
+    }
+    if (!canTranscribe(user)) {
+      toast.error("免费试用已达上限，请升级 Pro")
+      return
+    }
     setLoading(true)
     try {
       const result = await uploadRecording(blob, model, arrange, arrStyle)
@@ -90,9 +127,16 @@ export default function Home() {
           AI 自动钢琴扒谱 — 上传音频，秒出五线谱
         </p>
         <div className="flex items-center justify-center gap-3 mt-2">
-          <p className="text-xs text-[var(--text-muted)]">
-            {tierLabel || "加载中..."}
-          </p>
+          {user ? (
+            <UserMenu user={user} onUpdate={setUser} />
+          ) : (
+            <button
+              onClick={() => setShowAuth(true)}
+              className="px-4 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)] active:scale-[0.98]"
+            >
+              登录 / 注册
+            </button>
+          )}
           {backendOnline !== null && (
             <span className={`flex items-center gap-1 text-xs ${backendOnline ? "text-[var(--success)]" : "text-[var(--error)]"}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${backendOnline ? "bg-[var(--success)]" : "bg-[var(--error)]"}`} />
@@ -185,6 +229,13 @@ export default function Home() {
           支持 MP3 / WAV / FLAC / M4A · 钢琴独奏最佳{arrange && " · 自动编曲已启用"}
         </p>
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal
+        open={showAuth}
+        onClose={() => setShowAuth(false)}
+        onAuth={(u) => setUser(u)}
+      />
 
       {/* Loading overlay */}
       {loading && (

@@ -46,9 +46,11 @@ app.add_middleware(
 # API routes
 from app.api.transcription import router as transcription_router
 from app.api.export import router as export_router
+from app.api.auth import router as auth_router
 
 app.include_router(transcription_router, prefix=API_PREFIX)
 app.include_router(export_router, prefix=API_PREFIX)
+app.include_router(auth_router, prefix=API_PREFIX)
 
 
 @app.get("/")

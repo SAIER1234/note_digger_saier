@@ -4,12 +4,13 @@ import shutil
 import threading
 from pathlib import Path
 
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from app.config import MAX_UPLOAD_SIZE_MB, DEV_MODE
 from app.utils.file_storage import generate_task_id, get_upload_path, get_output_dir
 from app.services.youtube import is_supported_url
+from app.middleware.auth import get_user_from_header
 
 # In-memory task store (for DEV_MODE progress tracking)
 _task_store: dict = {}
@@ -17,7 +18,7 @@ _task_store: dict = {}
 router = APIRouter(prefix="/transcribe", tags=["transcription"])
 
 
-def _run_in_background(task_id: str, source_type: str, source_path: str | None = None, source_url: str | None = None, options: dict | None = None):
+def _run_in_background(task_id: str, source_type: str, source_path: str | None = None, source_url: str | None = None, options: dict | None = None, user_id: int | None = None):
     """Run pipeline in background thread, updating progress in _task_store."""
     from app.tasks.transcription import _run_pipeline_with_progress
 
@@ -35,6 +36,12 @@ def _run_in_background(task_id: str, source_type: str, source_path: str | None =
             progress_callback=progress_callback,
         )
         _task_store[task_id] = result
+        # Record transcription in user history
+        if user_id:
+            from app.models.user import record_transcription
+            engine = (options or {}).get("model", "auto")
+            filename = Path(source_path).name if source_path else "url"
+            record_transcription(user_id, task_id, filename, engine)
     except Exception as e:
         import traceback
         _task_store[task_id] = {
@@ -45,19 +52,54 @@ def _run_in_background(task_id: str, source_type: str, source_path: str | None =
         }
 
 
+def _check_usage(user_id: int) -> tuple[bool, str]:
+    """Check if user can transcribe. Returns (allowed, error_message)."""
+    from app.models.user import can_transcribe
+    allowed, reason = can_transcribe(user_id)
+    if not allowed:
+        return False, reason
+    return True, ""
+
+
+def _parse_token(request: Request) -> int | None:
+    """Extract and validate user token from request. Returns user_id or None."""
+    auth = request.headers.get("Authorization", "")
+    if not auth:
+        # Also check query param for file upload compatibility
+        return None
+    payload = get_user_from_header(auth)
+    if payload:
+        return payload["user_id"]
+    return None
+
+
 @router.post("/file")
 async def transcribe_file(
+    request: Request,
     file: UploadFile = File(...),
     model: str = Form("auto"),
     arrange: bool = Form(False),
     style: str = Form("broken"),
     difficulty: str = Form("medium"),
+    token: str = Form(""),
 ):
-    """Upload an audio file for transcription."""
+    """Upload an audio file for transcription. Optional token for user tracking."""
     content = await file.read()
     size_mb = len(content) / (1024 * 1024)
     if size_mb > MAX_UPLOAD_SIZE_MB:
         raise HTTPException(status_code=413, detail=f"文件大小 {size_mb:.1f}MB 超过限制 {MAX_UPLOAD_SIZE_MB}MB")
+
+    # Auth check: if token provided, validate and check usage
+    user_id = None
+    if token:
+        from app.middleware.auth import get_user_from_header
+        payload = get_user_from_header(f"Bearer {token}")
+        if payload:
+            from app.models.user import can_transcribe
+            allowed, reason = can_transcribe(payload["user_id"])
+            if not allowed:
+                raise HTTPException(status_code=403, detail=reason)
+            user_id = payload["user_id"]
 
     task_id = generate_task_id()
     upload_path = get_upload_path(task_id, file.filename or "audio.wav")
@@ -68,7 +110,7 @@ async def transcribe_file(
         threading.Thread(
             target=_run_in_background,
             args=(task_id, "file", str(upload_path)),
-            kwargs={"options": {"model": model, "arrange": arrange, "style": style, "difficulty": difficulty}},
+            kwargs={"options": {"model": model, "arrange": arrange, "style": style, "difficulty": difficulty}, "user_id": user_id},
             daemon=True,
         ).start()
         return JSONResponse({"task_id": task_id, "status": "processing", "stage": "提交成功", "percent": 0})
