@@ -63,13 +63,32 @@ def detect_chords(midi_path: str, window_beats: float = 1.0, bpm: float = 120.0)
             if note.start < t_end and note.end > t_start:
                 window_pitches.add(note.pitch % 12)
 
-        if len(window_pitches) < 3:
+        original_count = len(window_pitches)
+        if original_count < 2:
             continue
+
+        # For 2-note windows, try to infer the most likely third note
+        inferred = False
+        if original_count == 2:
+            pitches_list = sorted(window_pitches)
+            for candidate_interval in [4, 3]:  # try maj3 first, then min3
+                candidate = (pitches_list[0] + candidate_interval) % 12
+                if candidate not in window_pitches:
+                    window_pitches = window_pitches | {candidate}
+                    inferred = True
+                    break
+            if not inferred:
+                # Try adding perfect fifth
+                candidate = (pitches_list[0] + 7) % 12
+                if candidate not in window_pitches:
+                    window_pitches = window_pitches | {candidate}
 
         # Match against templates
         best_chord, best_confidence = _match_chord(window_pitches)
 
-        if best_confidence > 0.5:
+        # Stricter threshold for inferred chords
+        min_confidence = 0.75 if (original_count == 2) else 0.5
+        if best_confidence > min_confidence:
             chords.append({
                 "start": round(t_start, 2),
                 "end": round(t_end, 2),

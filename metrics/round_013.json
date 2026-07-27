@@ -1,0 +1,13 @@
+{
+  "round": 13,
+  "mode": "explore",
+  "direction": "arrangement",
+  "timestamp": "2026-07-27T21:50:00Z",
+  "change": "Lowered chord detection threshold from 3 to 2 pitch classes, added missing-note inference",
+  "details": {
+    "before": "Required 3+ pitch classes → missed chords when Basic Pitch drops notes",
+    "after": "Works with 2 pitch classes, infers missing 3rd note (tries maj3, min3, then perfect5)",
+    "threshold": "0.75 confidence for inferred chords, 0.5 for 3+ notes",
+    "verification": "E2E: C|Cmaj7|G, 31 notes, 2 tracks arranged"
+  }
+}
