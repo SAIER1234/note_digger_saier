@@ -98,12 +98,18 @@ def generate_accompaniment(
         start_time = chord_info["start"]
         end_time = chord_info["end"]
 
-        # Parse chord: "C", "Am", "G7" etc.
-        root_str = chord_name.rstrip("mM7ajdimusg#0123456789b")
+        # Parse chord: "C", "Am", "G7", "F#m", "Bb" etc.
+        # Known chord quality suffixes (sorted longest first for matching)
+        known_suffixes = ["maj7", "m7b5", "m7", "m6", "m", "sus4", "dim", "aug", "7", "6"]
+        root_str = chord_name
+        suffix = ""
+        for s in known_suffixes:
+            if chord_name.endswith(s) and len(chord_name) > len(s):
+                root_str = chord_name[:-len(s)]
+                suffix = s
+                break
         # Extract root note
         root_pc = _note_name_to_pc(root_str) if root_str else 0
-        # Extract chord quality suffix
-        suffix = chord_name[len(root_str):]
 
         # Get chord intervals
         intervals = CHORD_PATTERNS.get(suffix, CHORD_PATTERNS[""])

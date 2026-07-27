@@ -39,18 +39,18 @@ def detect_chords(midi_path: str, window_beats: float = 1.0, bpm: float = 120.0)
         if inst.is_drum:
             continue
         for note in inst.notes:
-            all_notes.append((note.start, note.end, note.pitch))
+            all_notes.append(note)  # Keep as Note objects, not tuples
 
     if not all_notes:
         return []
 
     # Sort by start time
-    all_notes.sort()
+    all_notes.sort(key=lambda n: n.start)
 
     # Segment into windows
     window_sec = window_beats * 60.0 / bpm
     max_time = max(n.end for n in all_notes)
-    num_windows = int(np.ceil(max_time / window_sec))
+    num_windows = int(np.ceil(max_time / window_sec)) if max_time > 0 else 1
 
     chords = []
     for wi in range(num_windows):
@@ -59,9 +59,9 @@ def detect_chords(midi_path: str, window_beats: float = 1.0, bpm: float = 120.0)
 
         # Find active notes in this window
         window_pitches = set()
-        for start, end, pitch in all_notes:
-            if start < t_end and end > t_start:
-                window_pitches.add(pitch % 12)
+        for note in all_notes:
+            if note.start < t_end and note.end > t_start:
+                window_pitches.add(note.pitch % 12)
 
         if len(window_pitches) < 3:
             continue

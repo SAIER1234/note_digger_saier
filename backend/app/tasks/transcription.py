@@ -72,13 +72,8 @@ def _run_pipeline_with_progress(
         clean_midi_path = output_dir / "transcribed_clean.mid"
         postprocess_midi(raw_midi_path, clean_midi_path)
 
-        # Step 6: Convert to MusicXML
-        cb("生成五线谱…", 85)
-        musicxml_path = output_dir / "score.musicxml"
-        midi_to_musicxml(clean_midi_path, musicxml_path)
-
-        # Step 6.5: Chord detection
-        cb("分析和弦…", 90)
+        # Step 5.5: Chord detection (needed for arrangement)
+        cb("分析和弦…", 75)
         try:
             chords = detect_chords(str(clean_midi_path))
             chord_line = format_chord_line(chords)
@@ -86,13 +81,13 @@ def _run_pipeline_with_progress(
             chords = []
             chord_line = ""
 
-        # Step 6.6: Piano arrangement (optional)
+        # Step 6: Piano arrangement (optional)
         do_arrange = options.get("arrange", False)
         arrange_style = options.get("style", "broken")
         arrange_diff = options.get("difficulty", "medium")
 
         if do_arrange and chords:
-            cb(f"编曲中·{STYLES.get(arrange_style, {}).get('name', arrange_style)}…", 95)
+            cb(f"编曲中·{STYLES.get(arrange_style, {}).get('name', arrange_style)}…", 85)
             try:
                 arranged_path = output_dir / "arranged.mid"
                 arrange_piano(
@@ -101,11 +96,16 @@ def _run_pipeline_with_progress(
                     style=arrange_style,
                     difficulty=arrange_diff,
                 )
-                clean_midi_path = arranged_path  # Use arranged version for MusicXML
+                clean_midi_path = arranged_path  # Use arranged version for sheet music
             except Exception as e:
                 print(f"Arrangement skipped: {e}")
 
-        # Step 7: Done
+        # Step 7: Convert to MusicXML (AFTER arrangement so it uses arranged MIDI)
+        cb("生成五线谱…", 95)
+        musicxml_path = output_dir / "score.musicxml"
+        midi_to_musicxml(clean_midi_path, musicxml_path)
+
+        # Step 8: Done
         cb("完成", 100)
         midi_info = get_midi_info(clean_midi_path)
 
