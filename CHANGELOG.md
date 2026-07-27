@@ -1,5 +1,11 @@
 # Note Digger — 迭代日志
 
+## Round 5 — 2026-07-27 [quality]
+- **方向**: 转录质量 — chord/arranger 回归测试 + 三 bug 修复
+- **bugfix**: chord_detect 存元组误用属性、arranger rstrip 洗掉升降号、MusicXML 编曲前生成
+- **测试**: verify.py 增至 21 项，新增 chord detect + arranger 回归
+- **下轮**: System（饥饿度0.90）或编曲自适应
+
 ## Round 4 — 2026-07-27 [ux]
 - **方向**: 用户体验 — 移动端适配 + 反馈优化
 - **完成**: 响应式排版、模型选择器自动换行、离线重试按钮、加载时间预估

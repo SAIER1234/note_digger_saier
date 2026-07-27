@@ -1,0 +1,14 @@
+{
+  "round": 5,
+  "mode": "explore",
+  "direction": "quality",
+  "timestamp": "2026-07-27T12:35:00Z",
+  "changes": [
+    "Added chord detection + arranger regression tests to verify.py (21 tests now)",
+    "Fixed chord_detect: stored tuples vs Note objects → never worked",
+    "Fixed arranger chord parsing: rstrip() stripped '#' from F# etc",
+    "Fixed MusicXML ordering: generated before arrangement → never showed arranged version"
+  ],
+  "impact": "Arrangement pipeline now works end-to-end. Chord detection was completely broken before.",
+  "verification": "21/21 verify.py passed. E2E: chord_line='C|C6|Fmaj7|Csus4', 21 notes, 2 tracks arranged."
+}

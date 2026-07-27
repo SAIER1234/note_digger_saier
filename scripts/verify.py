@@ -271,8 +271,54 @@ assert key2 is None, "Empty MIDI should return None"
 print(f"key detect: key={key}, conf={conf:.2f} OK")
 """, timeout=15)
 
-    # -- 8. Frontend build --
-    print("\n-- 8. Frontend Build --")
+    # -- 8. Chord Detection + Arranger (regression) --
+    print("\n-- 8. Chord Detection + Arranger --")
+    python_test("chord detect", """
+import sys, tempfile; sys.path.insert(0, 'backend')
+from pathlib import Path
+from app.models.chord_detect import detect_chords, format_chord_line
+from app.models.arranger import arrange_piano, _note_name_to_pc
+import pretty_midi
+
+# Test 1: C major chord
+midi = pretty_midi.PrettyMIDI()
+p = pretty_midi.Instrument(program=0)
+for pitch in [60, 64, 67]:  # C4, E4, G4
+    p.notes.append(pretty_midi.Note(velocity=80, pitch=pitch, start=0.0, end=2.0))
+midi.instruments.append(p)
+tmp = Path(tempfile.mktemp(suffix='.mid'))
+midi.write(str(tmp))
+chords = detect_chords(str(tmp))
+assert len(chords) > 0, f"No chords detected for C major"
+assert chords[0]['chord'] in ('C', 'C6', 'Cmaj7'), f"Expected C chord, got {chords[0]['chord']}"
+assert chords[0]['confidence'] > 0.5, f"Confidence too low: {chords[0]['confidence']}"
+tmp.unlink()
+
+# Test 2: Chord name parsing
+assert _note_name_to_pc('C') == 0
+assert _note_name_to_pc('A') == 9
+assert _note_name_to_pc('F#') == 6, f"F# should be 6, got {_note_name_to_pc('F#')}"
+
+# Test 3: Arrangement output
+midi2 = pretty_midi.PrettyMIDI()
+p2 = pretty_midi.Instrument(program=0)
+for pitch in [60, 64, 67, 72]:  # C major with octave
+    p2.notes.append(pretty_midi.Note(velocity=80, pitch=pitch, start=0.0, end=4.0))
+midi2.instruments.append(p2)
+tmp2 = Path(tempfile.mktemp(suffix='.mid'))
+tmp3 = Path(tempfile.mktemp(suffix='.mid'))
+midi2.write(str(tmp2))
+arrange_piano(str(tmp2), str(tmp3), style='broken')
+out = pretty_midi.PrettyMIDI(str(tmp3))
+assert len(out.instruments) >= 1, f"Arrangement should have at least 1 track"
+total_notes = sum(len(i.notes) for i in out.instruments)
+assert total_notes > 4, f"Arrangement should have more notes than input, got {total_notes}"
+tmp2.unlink(); tmp3.unlink()
+print(f"chord+arranger: detect OK, parse OK, arrange ({total_notes} notes) OK")
+""", timeout=15)
+
+    # -- 9. Frontend build --
+    print("\n-- 9. Frontend Build --")
     if FRONTEND_DIR.exists():
         r = subprocess.run(
             "npm run build",
