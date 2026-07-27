@@ -30,6 +30,25 @@ def postprocess_midi(
 
     midi = pretty_midi.PrettyMIDI(str(midi_path))
 
+    # Quantize: snap note onsets/offsets to beat grid
+    if quantize:
+        tempo = _detect_tempo_from_notes(midi) or 120.0
+        beat_duration = 60.0 / tempo
+        grid = beat_duration / 4  # 16th note grid
+
+        for instrument in midi.instruments:
+            for note in instrument.notes:
+                # Snap onset to nearest grid point
+                onset_tick = round(note.start / grid) * grid
+                if abs(onset_tick - note.start) < beat_duration * 0.3:
+                    note.start = onset_tick
+                # Snap offset to nearest grid point
+                offset_tick = round(note.end / grid) * grid
+                if abs(offset_tick - note.end) < beat_duration * 0.3:
+                    # Don't quantize to zero duration
+                    if offset_tick > note.start:
+                        note.end = offset_tick
+
     for instrument in midi.instruments:
         if remove_short_notes:
             instrument.notes = [
