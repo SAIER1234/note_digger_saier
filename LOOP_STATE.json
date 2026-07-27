@@ -1,16 +1,16 @@
 {
   "loop_version": 2,
-  "round": 0,
+  "round": 1,
   "mode": "explore",
-  "last_completed": null,
+  "last_completed": "2026-07-27T08:45:00Z",
   "first_started": "2026-07-27T08:30:00Z",
   "directions": {
     "quality": {
-      "last_round": null,
+      "last_round": 1,
       "status": "active",
       "consecutive_low_impact": 0,
-      "best_f1": null,
-      "notes": "Basic Pitch baseline ~70, target 80+. No benchmark yet."
+      "best_f1": 0.8233,
+      "notes": "Baseline F1=0.823. Slow/medium perfect, fast notes (140bpm) complete failure. min_note_length=100ms too aggressive for 16th notes."
     },
     "arrangement": {
       "last_round": null,

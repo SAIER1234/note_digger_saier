@@ -1,0 +1,25 @@
+{
+  "round": 1,
+  "mode": "explore",
+  "direction": "quality",
+  "timestamp": "2026-07-27T08:45:00Z",
+  "baseline": true,
+  "engine": "basic-pitch",
+  "preset": "high",
+  "results": [
+    {"label": "01_c_major_scale", "f1": 1.0, "precision": 1.0, "recall": 1.0, "weighted_score": 99.9, "notes_pred": 8, "notes_gt": 8},
+    {"label": "02_arpeggio", "f1": 0.9333, "precision": 0.875, "recall": 1.0, "weighted_score": 94.2, "notes_pred": 8, "notes_gt": 7},
+    {"label": "03_chords", "f1": 1.0, "precision": 1.0, "recall": 1.0, "weighted_score": 99.8, "notes_pred": 12, "notes_gt": 12},
+    {"label": "04_melody_bass", "f1": 0.8889, "precision": 0.8, "recall": 1.0, "weighted_score": 90.3, "notes_pred": 15, "notes_gt": 12},
+    {"label": "05_fast_notes", "f1": 0.1176, "precision": 1.0, "recall": 0.0625, "weighted_score": 24.6, "notes_pred": 2, "notes_gt": 32},
+    {"label": "06_low_dynamics", "f1": 1.0, "precision": 1.0, "recall": 1.0, "weighted_score": 99.8, "notes_pred": 6, "notes_gt": 6}
+  ],
+  "summary": {
+    "cases": 6,
+    "avg_f1": 0.8233,
+    "avg_weighted_score": 84.8,
+    "best_case": "01_c_major_scale (F1=1.000)",
+    "worst_case": "05_fast_notes (F1=0.118)",
+    "key_finding": "Fast notes (140bpm 16th) almost completely missed. min_note_length=100ms vs 107ms note duration leaves zero margin."
+  }
+}
