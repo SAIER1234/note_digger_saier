@@ -1,0 +1,13 @@
+{
+  "round": 8,
+  "mode": "explore",
+  "direction": "quality",
+  "timestamp": "2026-07-27T15:35:00Z",
+  "key_finding": "medium preset (0.901 synthetic) drops to 0.673 on realistic audio with harmonics. high preset is actually better: 0.899",
+  "change": "Default quality reverted to high. Added 2 realistic benchmark cases with 6-harmonic piano timbre.",
+  "benchmark": {
+    "synthetic_6_cases": {"high": 0.823, "medium": 0.901},
+    "realistic_2_cases": {"high": 0.899, "medium": 0.673},
+    "gap": "medium drops 23% on harmonics — overtones detected as false notes"
+  }
+}

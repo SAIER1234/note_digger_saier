@@ -1,16 +1,16 @@
 {
   "loop_version": 2,
-  "round": 7,
+  "round": 8,
   "mode": "explore",
-  "last_completed": "2026-07-27T14:30:00Z",
+  "last_completed": "2026-07-27T15:35:00Z",
   "first_started": "2026-07-27T08:30:00Z",
   "directions": {
     "quality": {
-      "last_round": 5,
+      "last_round": 8,
       "status": "active",
       "consecutive_low_impact": 0,
-      "best_f1": 0.9009,
-      "notes": "F1=0.901 on synthetic. Real audio quality needs benchmark with harmonics."
+      "best_f1": 0.899,
+      "notes": "high preset best on realistic audio (F1=0.899). medium (0.673) destroyed by harmonics. 2 realistic benchmark cases added."
     },
     "arrangement": {
       "last_round": 6,
