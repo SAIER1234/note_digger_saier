@@ -216,6 +216,7 @@ export default function Home() {
               <option value="arpeggio">琶音</option>
               <option value="block">柱式和弦</option>
               <option value="alberti">阿尔贝蒂低音</option>
+              <option value="waltz">华尔兹</option>
             </select>
           )}
         </div>

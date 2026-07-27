@@ -29,6 +29,11 @@ STYLES = {
         "pattern": [0, 2, 1, 2],   # root-5th-3rd-5th
         "rhythm": 0.25,              # 16th notes
     },
+    "waltz": {      # Waltz: bass-chord-chord (oom-pah-pah)
+        "name": "华尔兹",
+        "pattern": [-1, 0, 1, 2, 0, 1, 2],  # bass note (-1) then chord notes
+        "rhythm": 0.25,                       # 8th note triplets feel
+    },
 }
 
 CHORD_PATTERNS = {
@@ -126,7 +131,15 @@ def generate_accompaniment(
         while t < end_time:
             step = pattern[pattern_idx % len(pattern)]
             if step < len(chord_midi):
-                midi_pitch = chord_midi[step]
+                # Handle special pattern indices
+                if step == -1:  # Bass note one octave below root
+                    midi_pitch = chord_midi[0] - 12
+                elif step < len(chord_midi):
+                    midi_pitch = chord_midi[step]
+                else:
+                    t += note_duration
+                    pattern_idx += 1
+                    continue
                 # Velocity variation: accent on downbeats, softer on upbeats
                 is_downbeat = (pattern_idx % len(pattern) == 0)
                 base_vel = velocity + 5 if is_downbeat else velocity - 3

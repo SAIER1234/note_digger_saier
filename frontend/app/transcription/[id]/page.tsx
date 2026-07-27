@@ -147,7 +147,7 @@ export default function TranscriptionPage() {
               <div>
                 <p className="text-sm font-medium text-[var(--accent)]">自动编曲已启用</p>
                 <p className="text-xs text-[var(--text-muted)]">
-                  风格: {result.style === "broken" ? "分解和弦" : result.style === "arpeggio" ? "琶音" : result.style === "block" ? "柱式和弦" : result.style === "alberti" ? "阿尔贝蒂低音" : result.style}
+                  风格: {result.style === "broken" ? "分解和弦" : result.style === "arpeggio" ? "琶音" : result.style === "block" ? "柱式和弦" : result.style === "alberti" ? "阿尔贝蒂低音" : result.style === "waltz" ? "华尔兹" : result.style}
                 </p>
               </div>
             </div>
