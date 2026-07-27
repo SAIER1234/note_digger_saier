@@ -1,5 +1,10 @@
 # Note Digger — 迭代日志
 
+## Round 19 — 2026-07-28 [arr]
+- **方向**: 编曲质量 — 前端加难度选择器（简单/中等/困难）
+- **效果**: easy=柱式慢速, medium=分解, hard=所选风格原速
+- **下轮**: ux（饥饿度1.20）
+
 ## Round 18 — 2026-07-28 [system]
 - **方向**: 系统健壮 — 系统状态监控端点
 - **端点**: GET /api/v1/system/status (uptime/mem/disk/转录数)
