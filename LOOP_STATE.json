@@ -1,0 +1,37 @@
+{
+  "loop_version": 2,
+  "round": 0,
+  "mode": "explore",
+  "last_completed": null,
+  "first_started": "2026-07-27T08:30:00Z",
+  "directions": {
+    "quality": {
+      "last_round": null,
+      "status": "active",
+      "consecutive_low_impact": 0,
+      "best_f1": null,
+      "notes": "Basic Pitch baseline ~70, target 80+. No benchmark yet."
+    },
+    "arrangement": {
+      "last_round": null,
+      "status": "active",
+      "consecutive_low_impact": 0,
+      "best_playability": null,
+      "notes": "4 styles implemented. Need playability scoring."
+    },
+    "ux": {
+      "last_round": null,
+      "status": "active",
+      "consecutive_low_impact": 0,
+      "notes": "Desktop OK. Mobile not responsive. Dark mode partial."
+    },
+    "system": {
+      "last_round": null,
+      "status": "active",
+      "consecutive_low_impact": 0,
+      "notes": "ECS stable. No monitoring. No backups."
+    }
+  },
+  "current_branch_experiments": [],
+  "deployed_ports": [8001]
+}
