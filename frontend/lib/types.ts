@@ -34,6 +34,8 @@ export interface TranscriptionResult {
   engine?: string
   chord_line?: string
   chords?: { start: number; end: number; chord: string; confidence: number }[]
+  arranged?: boolean
+  style?: string | null
 }
 
 export interface UploadResponse {
