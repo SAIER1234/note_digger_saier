@@ -6,13 +6,10 @@ import music21 as m21
 
 
 def midi_to_musicxml(midi_path: Path, output_path: Path | None = None, split_hands: bool = True) -> Path:
-    """
-    Convert a MIDI file to MusicXML format with piano grand-staff formatting.
-    """
+    """Convert a MIDI file to MusicXML format with piano grand-staff formatting."""
     if output_path is None:
         output_path = midi_path.with_suffix(".musicxml")
 
-    # Use music21's built-in MIDI parsing — better measure detection
     score = m21.converter.parse(str(midi_path))
 
     # Format as readable piano score
@@ -26,10 +23,13 @@ def midi_to_musicxml(midi_path: Path, output_path: Path | None = None, split_han
 
 
 def _split_into_grand_staff(score):
-    """Split a single-staff score into grand staff (RH treble, LH bass)."""
-    from music21 import stream, clef, instrument, note, chord as m21chord
+    """Split a single-staff score into piano grand staff (RH treble, LH bass).
 
-    SPLIT_PITCH = 60  # C4
+    Uses a smart split: simultaneous notes stay together, split point
+    chosen to minimize within-hand pitch variance.
+    """
+    from music21 import stream, clef, instrument, note, chord as m21chord
+    import statistics
 
     try:
         original_part = score.parts[0]
@@ -37,36 +37,88 @@ def _split_into_grand_staff(score):
         return
 
     # Collect notes
-    rh_notes = []
-    lh_notes = []
+    notes_only = []
     for el in original_part.flatten().notesAndRests:
         if isinstance(el, (note.Note, m21chord.Chord)):
-            pitches = [el.pitch.midi] if isinstance(el, note.Note) else [p.midi for p in el.pitches]
-            avg = sum(pitches) / len(pitches)
-            if avg >= SPLIT_PITCH:
-                rh_notes.append(el)
-            else:
-                lh_notes.append(el)
+            notes_only.append(el)
 
-    # If no split possible, keep as-is
-    if not rh_notes or not lh_notes:
+    if len(notes_only) < 2:
         return
 
-    # Create RH part
+    # Find optimal split point
+    def _pitch(el):
+        if isinstance(el, note.Note):
+            return el.pitch.midi
+        return sum(p.midi for p in el.pitches) / len(el.pitches)
+
+    all_pitches = sorted([_pitch(el) for el in notes_only])
+
+    best_split = 60  # Default C4
+    best_score = float('inf')
+    for candidate in range(48, 73):
+        below = [p for p in all_pitches if p < candidate]
+        above = [p for p in all_pitches if p >= candidate]
+        if len(below) < 2 or len(above) < 2:
+            continue
+        var_below = statistics.variance(below)
+        var_above = statistics.variance(above)
+        sc = var_below * len(below) + var_above * len(above)
+        if sc < best_score:
+            best_score = sc
+            best_split = candidate
+
+    # Group simultaneous notes (within 30ms) into the same hand
+    EPSILON = 0.03
+    assignments = {}
+    for el in notes_only:
+        onset = float(el.offset)
+        cluster_pitches = [_pitch(el)]
+        for other in notes_only:
+            if other is el:
+                continue
+            if abs(onset - float(other.offset)) < EPSILON:
+                cluster_pitches.append(_pitch(other))
+        cluster_avg = sum(cluster_pitches) / len(cluster_pitches)
+        assignments[id(el)] = 'rh' if cluster_avg >= best_split else 'lh'
+
+    has_rh = any(v == 'rh' for v in assignments.values())
+    has_lh = any(v == 'lh' for v in assignments.values())
+    if not has_rh or not has_lh:
+        return
+
+    # Build new parts with measure structure preserved
     rh_part = stream.Part()
     rh_part.insert(0, instrument.Piano())
     rh_part.insert(0, clef.TrebleClef())
-    for n in rh_notes:
-        rh_part.append(n)
 
-    # Create LH part
     lh_part = stream.Part()
     lh_part.insert(0, instrument.Piano())
     lh_part.insert(0, clef.BassClef())
-    for n in lh_notes:
-        lh_part.append(n)
 
-    # Replace original parts
+    for m in original_part.getElementsByClass(stream.Measure):
+        rh_measure = stream.Measure(number=m.number)
+        lh_measure = stream.Measure(number=m.number)
+
+        ts = m.getTimeSignatures()
+        if ts:
+            rh_measure.timeSignature = ts[0]
+            lh_measure.timeSignature = ts[0]
+
+        for el in m.notesAndRests:
+            if id(el) in assignments:
+                if assignments[id(el)] == 'rh':
+                    rh_measure.append(el)
+                else:
+                    lh_measure.append(el)
+            elif isinstance(el, note.Rest):
+                rh_measure.append(el)
+
+        if len(rh_measure.notesAndRests) > 0:
+            rh_part.append(rh_measure)
+        if len(lh_measure.notesAndRests) > 0:
+            lh_part.append(lh_measure)
+
+    # Rebuild score — remove old part, insert new ones
     score.remove(original_part)
     score.insert(0, rh_part)
     score.insert(1, lh_part)
@@ -74,7 +126,7 @@ def _split_into_grand_staff(score):
 
 def _format_as_piano_score(score: m21.stream.Score) -> None:
     """Format a score for piano grand staff display."""
-    from music21 import instrument, clef, key, meter
+    from music21 import instrument, clef
 
     # Detect and set key signature
     try:
@@ -83,43 +135,34 @@ def _format_as_piano_score(score: m21.stream.Score) -> None:
             for part in score.parts:
                 part.insert(0, detected_key)
     except Exception:
-        pass  # Skip key detection if not enough notes
+        pass
 
     # Ensure parts use piano instrument
     for part in score.parts:
         part.insert(0, instrument.Piano())
 
-    # Try to split right/left hand based on pitch
-    # (simplified; more sophisticated splitting could use ML)
+    # Simple hand/clef assignment
     _assign_hands(score)
 
 
 def _assign_hands(score: m21.stream.Score) -> None:
-    """Simple hand assignment: split at middle C (C4 = MIDI 60)."""
-    from music21 import clef
+    """Assign treble/bass clef based on average pitch."""
+    from music21 import clef, chord
 
     for part in score.parts:
-        # Check if this part already has a clef assignment
-        existing_clefs = list(part.getElementsByClass(clef.Clef))
-        if existing_clefs:
-            continue  # Don't overwrite existing clefs
+        existing = list(part.getElementsByClass(clef.Clef))
+        if existing:
+            continue
 
-        # Get pitch range (handle Note and Chord)
-        from music21 import chord
         pitches = []
         for n in part.flatten().notes:
             if isinstance(n, chord.Chord):
                 pitches.extend(p.midi for p in n.pitches)
             else:
                 pitches.append(n.pitch.midi)
-        if not pitches:
-            continue
-
-        avg_pitch = sum(pitches) / len(pitches)
-        if avg_pitch > 60:
-            part.insert(0, clef.TrebleClef())
-        else:
-            part.insert(0, clef.BassClef())
+        if pitches:
+            avg = sum(pitches) / len(pitches)
+            part.insert(0, clef.TrebleClef() if avg > 60 else clef.BassClef())
 
 
 def musicxml_to_pretty_string(musicxml_path: Path) -> str:
