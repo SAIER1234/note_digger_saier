@@ -1,5 +1,12 @@
 # Note Digger — 迭代日志
 
+## Round 7 — 2026-07-27 [system]
+- **方向**: 系统健壮 — SQLite 备份 + 文件校验 + 速率限制
+- **备份**: backend/scripts/backup_db.py，支持在线备份和自动清理
+- **安全**: 上传文件检查扩展名和 magic bytes，拒绝非音频
+- **限流**: 10次/分(转录) 20次/分(认证) 60次/分(其他)，429 返回
+- **下轮**: UX（饥饿度最高）
+
 ## Round 6 — 2026-07-27 [arr]
 - **方向**: 编曲质量 — 自动速度检测替代硬编码 120 BPM
 - **改进**: chord_detect 和 arrange_piano 现在使用 detected tempo

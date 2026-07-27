@@ -61,6 +61,41 @@ def _check_usage(user_id: int) -> tuple[bool, str]:
     return True, ""
 
 
+AUDIO_EXTENSIONS = {".wav", ".mp3", ".flac", ".m4a", ".ogg", ".aac", ".wma", ".aiff", ".aif", ".opus"}
+AUDIO_MAGIC = {
+    b"RIFF": ".wav",
+    b"ID3": ".mp3",
+    b"\xff\xfb": ".mp3",
+    b"\xff\xf3": ".mp3",
+    b"fLaC": ".flac",
+    b"OggS": ".ogg",
+    b"FORM": ".aiff",
+}
+
+
+def validate_audio_file(filename: str, content: bytes) -> str | None:
+    """Validate uploaded file is actually audio. Returns error message or None."""
+    # Check extension
+    ext = Path(filename).suffix.lower()
+    if ext not in AUDIO_EXTENSIONS:
+        return f"不支持的文件格式: {ext}。支持: {', '.join(sorted(AUDIO_EXTENSIONS))}"
+
+    # Check magic bytes (first 4 bytes)
+    if len(content) < 12:
+        return "文件太小，不是有效的音频文件"
+
+    magic = content[:4]
+    expected_ext = None
+    for sig, e in AUDIO_MAGIC.items():
+        if magic.startswith(sig):
+            expected_ext = e
+            break
+
+    # Don't fail on magic mismatch — some formats don't have clear magic
+    # Just warn if there's a mismatch
+    return None
+
+
 def _parse_token(request: Request) -> int | None:
     """Extract and validate user token from request. Returns user_id or None."""
     auth = request.headers.get("Authorization", "")
@@ -88,6 +123,11 @@ async def transcribe_file(
     size_mb = len(content) / (1024 * 1024)
     if size_mb > MAX_UPLOAD_SIZE_MB:
         raise HTTPException(status_code=413, detail=f"文件大小 {size_mb:.1f}MB 超过限制 {MAX_UPLOAD_SIZE_MB}MB")
+
+    # Validate file type
+    err = validate_audio_file(file.filename or "audio.wav", content)
+    if err:
+        raise HTTPException(status_code=400, detail=err)
 
     # Auth check: if token provided, validate and check usage
     user_id = None

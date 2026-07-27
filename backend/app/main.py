@@ -2,9 +2,9 @@
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 
 from app.config import API_PREFIX, OUTPUT_DIR
 
@@ -43,6 +43,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Rate limiting middleware
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    """Apply rate limiting to API endpoints."""
+    from app.middleware.rate_limit import check_rate_limit, maybe_cleanup
+    path = request.url.path
+    if path.startswith(API_PREFIX):
+        ip = request.client.host if request.client else "unknown"
+        allowed, remaining = check_rate_limit(ip, path)
+        if not allowed:
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "请求太频繁，请稍后再试", "retry_after": 60},
+            )
+        maybe_cleanup()
+    response = await call_next(request)
+    return response
 
 # API routes
 from app.api.transcription import router as transcription_router
