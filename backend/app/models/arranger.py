@@ -120,15 +120,21 @@ def generate_accompaniment(
         # Keep in bass range (MIDI 36-60)
         chord_midi = [max(36, min(60, m)) for m in chord_midi]
 
-        # Apply pattern
+        # Apply pattern with velocity dynamics
         t = start_time
         pattern_idx = 0
         while t < end_time:
             step = pattern[pattern_idx % len(pattern)]
             if step < len(chord_midi):
                 midi_pitch = chord_midi[step]
+                # Velocity variation: accent on downbeats, softer on upbeats
+                is_downbeat = (pattern_idx % len(pattern) == 0)
+                base_vel = velocity + 5 if is_downbeat else velocity - 3
+                # Add micro-variation for human feel (±3)
+                import random
+                vel = max(30, min(100, base_vel + random.randint(-3, 3)))
                 acc_notes.append(pretty_midi.Note(
-                    velocity=velocity,
+                    velocity=vel,
                     pitch=midi_pitch,
                     start=t,
                     end=min(t + note_duration * 0.9, end_time),
