@@ -1,0 +1,12 @@
+{
+  "round": 14,
+  "mode": "explore",
+  "direction": "quality",
+  "timestamp": "2026-07-27T22:00:00Z",
+  "change": "Velocity smoothing: 3-point weighted average filter in postprocess",
+  "details": {
+    "method": "Weighted sliding window (current 0.5 + neighbors 0.25 each)",
+    "benefit": "Reduces abrupt velocity jumps for more natural MIDI playback",
+    "edge_handling": "First/last note unchanged, clamped to 10-127"
+  }
+}

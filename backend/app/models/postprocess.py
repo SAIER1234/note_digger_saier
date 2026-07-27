@@ -53,6 +53,24 @@ def postprocess_midi(
             for n in instrument.notes:
                 n.velocity = int(np.clip(n.velocity, 15, min(127, p90 * 1.2)))
 
+        # Velocity smoothing: 3-point weighted average across time-ordered notes
+        for instrument in midi.instruments:
+            if len(instrument.notes) < 3:
+                continue
+            sorted_notes = sorted(instrument.notes, key=lambda n: n.start)
+            smoothed = []
+            for i, n in enumerate(sorted_notes):
+                if i == 0 or i == len(sorted_notes) - 1:
+                    smoothed.append(n.velocity)
+                else:
+                    # Weighted: current note (0.5) + neighbors (0.25 each)
+                    v = (sorted_notes[i-1].velocity * 0.25 +
+                         n.velocity * 0.5 +
+                         sorted_notes[i+1].velocity * 0.25)
+                    smoothed.append(int(v))
+            for n, v in zip(sorted_notes, smoothed):
+                n.velocity = max(10, min(127, v))
+
     # Tempo detection
     if detect_tempo and len(midi.instruments) > 0:
         try:
