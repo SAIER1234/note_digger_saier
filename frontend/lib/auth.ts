@@ -1,4 +1,4 @@
-"""Frontend auth client — login, register, token management."""
+// Frontend auth client — login, register, token management.
 
 import { getApiBase } from './api'
 
