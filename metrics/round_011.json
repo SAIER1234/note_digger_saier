@@ -1,0 +1,11 @@
+{
+  "round": 11,
+  "mode": "explore",
+  "direction": "quality",
+  "status": "LOW_IMPACT — reverted",
+  "timestamp": "2026-07-27T20:30:00Z",
+  "experiment": "Harmonic overtone filter in _clean_midi_notes",
+  "result": "REGRESSION: F1 dropped from 0.823→0.743 (synth) and 0.899→0.788 (real)",
+  "root_cause": "Octave doubling is legitimate in piano music. Cannot distinguish overtone artifacts from intentional octave doubling without source separation or model confidence scores.",
+  "action": "Reverted. Lesson: post-processing filters based on pitch relationships alone are too destructive."
+}

@@ -101,17 +101,14 @@ def _clean_midi_notes(midi_data, min_duration: float = 0.07, min_velocity: int =
     """Remove likely noise from Basic Pitch output."""
     for instrument in midi_data.instruments:
         if instrument.is_drum:
-            # Remove all drum hits (Basic Pitch sometimes hallucinates percussion)
             instrument.notes = []
             continue
 
         filtered = []
         for note in sorted(instrument.notes, key=lambda n: (n.pitch, n.start)):
             duration = note.end - note.start
-            # Filter: too short OR too quiet
             if duration < min_duration or note.velocity < min_velocity:
                 continue
-            # Filter: overlapping same-pitch notes (keep louder)
             if filtered and filtered[-1].pitch == note.pitch:
                 if note.start < filtered[-1].end:
                     if note.velocity > filtered[-1].velocity:
