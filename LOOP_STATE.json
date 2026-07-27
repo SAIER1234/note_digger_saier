@@ -1,8 +1,8 @@
 {
   "loop_version": 2,
-  "round": 21,
+  "round": 22,
   "mode": "explore",
-  "last_completed": "2026-07-28T03:10:00Z",
+  "last_completed": "2026-07-28T07:30:00Z",
   "first_started": "2026-07-27T08:30:00Z",
   "directions": {
     "quality": {
@@ -13,11 +13,11 @@
       "notes": "Note quantization to 16th-grid. F1=0.899. 10 benchmark cases."
     },
     "arrangement": {
-      "last_round": 19,
+      "last_round": 22,
       "status": "active",
       "consecutive_low_impact": 0,
-      "best_playability": null,
-      "notes": "5 styles + difficulty selector (easy/medium/hard)."
+      "best_playability": 100,
+      "notes": "R22: Voice leading + waltz fix + dynamics arc. Playability 99-100."
     },
     "ux": {
       "last_round": 21,

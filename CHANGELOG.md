@@ -1,5 +1,14 @@
 # Note Digger — 迭代日志
 
+## Round 22 — 2026-07-28 [arr]
+- **方向**: 编曲质量 — 声部引导 + 华尔兹修复 + 力度弧线
+- **voice leading**: _find_smoothest_voicing() 选最近转位，左手不再大跳
+- **waltz fix**: 正确 3/4 拍 oom-pah-pah，第2&3拍弹完整和弦
+- **dynamics arc**: 渐强至60%处→渐弱至结尾，告别恒定力度
+- **评测**: chords playability 100, pop_ballad 99, 无回归
+- **22轮**: quality(7) · arr(7) · ux(4) · system(3) · LOW_IMPACT(1)
+- **下轮**: system（饥饿度0.90）
+
 ## Round 21 — 2026-07-28 [ux]
 - **方向**: 用户体验 — 历史页显示音符数/时长/编曲状态
 - **后端**: get_user_history 读取 MIDI 元数据
