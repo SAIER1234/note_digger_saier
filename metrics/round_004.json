@@ -1,0 +1,16 @@
+{
+  "round": 4,
+  "mode": "explore",
+  "direction": "ux",
+  "timestamp": "2026-07-27T12:00:00Z",
+  "change": "Mobile responsive layout + better user feedback",
+  "improvements": [
+    "Responsive typography (text-3xl mobile, md:text-5xl desktop)",
+    "Model selector wraps on small screens",
+    "Offline indicator clickable to retry connection",
+    "Loading overlay shows estimated time per model engine",
+    "Better mobile padding and spacing",
+    "Hidden non-essential text on small screens"
+  ],
+  "verification": "Frontend built and deployed, HTTP 200 verified from external"
+}

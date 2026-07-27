@@ -22,12 +22,13 @@ AI 自动钢琴扒谱 Web 应用。Phase 1 专注钢琴独奏转录，后续加�
 | Simple librosa | 30分 | CPU (零依赖) |
 
 ## 运行方式
-- 后端: bp311 conda env, uvicorn port 8002
-- 前端: Next.js dev port 5050
+- 本地: backend bp311 conda env port 8002, frontend Next.js dev port 5050
+- ECS: backend venv port 8001, frontend Next.js production port 3000, Nginx :80
 - Pipeline: 上传→预处理→转录→MIDI→MusicXML→OSMD渲染
+- 评测: 6 例基准数据, evaluate.py 算 F1/编曲分
 
-## 部署目标
-- 同一台 ECS（阿里云 2G8核）
-- Nginx + FastAPI(1 worker) + Next.js production
-- 转录任务 → 云端 GPU（AutoDL）
-- 无 Redis（内存不够，用内存队列）
+## 部署
+- ECS 112.124.56.83 (阿里云 7.1GB), autofarm 占 8000
+- **GitHub 在 ECS 上被墙**，部署用 scp 传文件，不要 git pull
+- Systemd: note-digger-backend (8001) + note-digger-frontend (3000) + nginx
+- Loop: CronCreate 每小时 :57, LOOP_STATE.json 持久化
