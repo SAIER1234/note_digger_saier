@@ -1,16 +1,16 @@
 {
   "loop_version": 2,
-  "round": 16,
+  "round": 17,
   "mode": "explore",
-  "last_completed": "2026-07-28T08:15:00Z",
+  "last_completed": "2026-07-28T02:30:00Z",
   "first_started": "2026-07-27T08:30:00Z",
   "directions": {
     "quality": {
-      "last_round": 14,
+      "last_round": 17,
       "status": "active",
       "consecutive_low_impact": 0,
       "best_f1": 0.899,
-      "notes": "Velocity smoothing added. F1=0.899 baseline."
+      "notes": "10 benchmark cases. New pop ballad F1=0.96, jazz F1=1.0."
     },
     "arrangement": {
       "last_round": 16,
