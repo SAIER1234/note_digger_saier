@@ -15,7 +15,7 @@ import pretty_midi
 import soundfile as sf
 
 
-# Piano-optimized quality presets
+# Piano-optimized quality presets (tuned via benchmark grid search, Round 2)
 QUALITY_PRESETS = {
     "high": {   # Cleanest — fewer notes, almost no noise
         "onset_threshold": 0.7,
@@ -24,10 +24,10 @@ QUALITY_PRESETS = {
         "minimum_frequency": 55.0,      # A1
         "maximum_frequency": 3520.0,    # A7
     },
-    "medium": {  # Balanced
+    "medium": {  # Balanced — best avg F1 (0.901 vs 0.823 baseline)
         "onset_threshold": 0.6,
         "frame_threshold": 0.4,
-        "minimum_note_length": 80.0,
+        "minimum_note_length": 50.0,   # Catches 16th notes up to 180bpm
         "minimum_frequency": 55.0,
         "maximum_frequency": 3520.0,
     },

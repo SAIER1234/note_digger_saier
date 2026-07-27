@@ -1,0 +1,26 @@
+{
+  "round": 2,
+  "mode": "explore",
+  "direction": "quality",
+  "timestamp": "2026-07-27T09:00:00Z",
+  "change": "Updated medium preset: onset=0.6, frame=0.4, min_note_length=50ms. Default quality high→medium.",
+  "baseline_f1": 0.8233,
+  "new_f1": 0.9009,
+  "improvement_pct": 7.8,
+  "params": {
+    "onset_threshold": 0.6,
+    "frame_threshold": 0.4,
+    "minimum_note_length": 50.0,
+    "minimum_frequency": 55.0,
+    "maximum_frequency": 3520.0
+  },
+  "per_case": {
+    "01_c_major_scale": {"before": 1.0, "after": 1.0, "delta": 0.0},
+    "02_arpeggio": {"before": 0.933, "after": 0.737, "delta": -19.6},
+    "03_chords": {"before": 1.0, "after": 0.828, "delta": -17.2},
+    "04_melody_bass": {"before": 0.889, "after": 0.857, "delta": -3.2},
+    "05_fast_notes": {"before": 0.118, "after": 0.984, "delta": 86.6},
+    "06_low_dynamics": {"before": 1.0, "after": 1.0, "delta": 0.0}
+  },
+  "key_finding": "Single preset cannot optimize both harmonic-rich AND fast passages. Net gain +7.8% by sacrificing some precision on chords/arpeggios. Next: adaptive preset selection based on tempo detection."
+}
