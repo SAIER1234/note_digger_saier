@@ -1,8 +1,8 @@
 {
   "loop_version": 2,
-  "round": 20,
+  "round": 21,
   "mode": "explore",
-  "last_completed": "2026-07-28T03:00:00Z",
+  "last_completed": "2026-07-28T03:10:00Z",
   "first_started": "2026-07-27T08:30:00Z",
   "directions": {
     "quality": {
@@ -20,10 +20,10 @@
       "notes": "5 styles + difficulty selector (easy/medium/hard)."
     },
     "ux": {
-      "last_round": 15,
+      "last_round": 21,
       "status": "active",
       "consecutive_low_impact": 0,
-      "notes": "Anonymous trial: no forced login. Both pages responsive."
+      "notes": "Enriched history: note count, duration, arranged badge."
     },
     "system": {
       "last_round": 18,
