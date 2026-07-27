@@ -40,17 +40,17 @@ export async function uploadFile(
   model: string = "auto",
   arrange: boolean = false,
   style: string = "broken",
+  difficulty: string = "medium",
 ): Promise<UploadResponse> {
   const form = new FormData()
   form.append("file", file)
   form.append("model", model)
-  // Include auth token if logged in
   const token = getToken()
   if (token) form.append("token", token)
   if (arrange) {
     form.append("arrange", "true")
     form.append("style", style)
-    form.append("difficulty", "medium")
+    form.append("difficulty", difficulty)
   }
 
   const controller = new AbortController()
@@ -84,6 +84,7 @@ export async function transcribeUrl(
   model: string = "auto",
   arrange: boolean = false,
   style: string = "broken",
+  difficulty: string = "medium",
 ): Promise<UploadResponse> {
   const form = new FormData()
   form.append("url", url)
@@ -91,7 +92,7 @@ export async function transcribeUrl(
   if (arrange) {
     form.append("arrange", "true")
     form.append("style", style)
-    form.append("difficulty", "medium")
+    form.append("difficulty", difficulty)
   }
 
   const res = await fetch(`${getApiBase()}${API_PREFIX}/transcribe/url`, {
@@ -112,6 +113,7 @@ export async function uploadRecording(
   model: string = "auto",
   arrange: boolean = false,
   style: string = "broken",
+  difficulty: string = "medium",
 ): Promise<UploadResponse> {
   const form = new FormData()
   form.append("file", blob, "recording.wav")
@@ -119,7 +121,7 @@ export async function uploadRecording(
   if (arrange) {
     form.append("arrange", "true")
     form.append("style", style)
-    form.append("difficulty", "medium")
+    form.append("difficulty", difficulty)
   }
 
   const res = await fetch(`${getApiBase()}${API_PREFIX}/transcribe/record`, {

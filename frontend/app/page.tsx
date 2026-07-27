@@ -31,6 +31,7 @@ export default function Home() {
   const [tierLabel, setTierLabel] = useState("")
   const [arrange, setArrange] = useState(false)
   const [arrStyle, setArrStyle] = useState("broken")
+  const [arrDiff, setArrDiff] = useState("medium")
 
   // Auth state
   const [user, setUser] = useState<User | null>(null)
@@ -58,7 +59,7 @@ export default function Home() {
     }
     setLoading(true)
     try {
-      const result = await uploadFile(file, model, arrange, arrStyle)
+      const result = await uploadFile(file, model, arrange, arrStyle, arrDiff)
       router.push(`/transcription/${result.task_id}`)
     } catch (err: any) {
       toast.error(err.message || "上传失败，请重试")
@@ -73,7 +74,7 @@ export default function Home() {
     }
     setLoading(true)
     try {
-      const result = await transcribeUrl(url, model, arrange, arrStyle)
+      const result = await transcribeUrl(url, model, arrange, arrStyle, arrDiff)
       router.push(`/transcription/${result.task_id}`)
     } catch (err: any) {
       toast.error(err.message || "提交失败，请检查链接")
@@ -88,7 +89,7 @@ export default function Home() {
     }
     setLoading(true)
     try {
-      const result = await uploadRecording(blob, model, arrange, arrStyle)
+      const result = await uploadRecording(blob, model, arrange, arrStyle, arrDiff)
       router.push(`/transcription/${result.task_id}`)
     } catch (err: any) {
       toast.error(err.message || "上传录音失败")
@@ -207,10 +208,12 @@ export default function Home() {
             自动编曲
           </label>
           {arrange && (
+            <>
             <select
               value={arrStyle}
               onChange={(e) => setArrStyle(e.target.value)}
               className="bg-[var(--surface-light)] text-xs text-[var(--text)] px-2 py-1 rounded border border-[var(--surface-light)] cursor-pointer"
+              title="编曲风格"
             >
               <option value="broken">分解和弦</option>
               <option value="arpeggio">琶音</option>
@@ -218,6 +221,17 @@ export default function Home() {
               <option value="alberti">阿尔贝蒂低音</option>
               <option value="waltz">华尔兹</option>
             </select>
+            <select
+              value={arrDiff}
+              onChange={(e) => setArrDiff(e.target.value)}
+              className="bg-[var(--surface-light)] text-xs text-[var(--text)] px-2 py-1 rounded border border-[var(--surface-light)] cursor-pointer"
+              title="难度等级"
+            >
+              <option value="easy">简单</option>
+              <option value="medium">中等</option>
+              <option value="hard">困难</option>
+            </select>
+            </>
           )}
         </div>
 
