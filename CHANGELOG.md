@@ -1,5 +1,11 @@
 # Note Digger — 迭代日志
 
+## Round 9 — 2026-07-27 [ux]
+- **方向**: 用户体验 — 转录结果页改进
+- **改进**: 编曲标记(显示风格)、错误重试按钮、导出按钮 2 列移动端网格
+- **修复**: TranscriptionResult 类型缺少 arranged/style 字段
+- **下轮**: arrangement（饥饿度 1.35）
+
 ## Round 8 — 2026-07-27 [quality]
 - **方向**: 转录质量 — 真实音频基准测试，发现 medium preset 在泛音上崩坏
 - **关键发现**: medium F1=0.901(合成)→0.673(真实泛音)，high 反而 0.899 更好

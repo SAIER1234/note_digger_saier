@@ -1,0 +1,13 @@
+{
+  "round": 9,
+  "mode": "explore",
+  "direction": "ux",
+  "timestamp": "2026-07-27T18:15:00Z",
+  "change": "Result page UX: arrangement badge, error retry, mobile grid, type fix",
+  "improvements": [
+    "Arrangement badge shows when auto-arrange was used with style label",
+    "Error state: added retry button alongside re-upload",
+    "Export buttons: 2-col mobile grid, better icon sizing",
+    "Fixed TranscriptionResult type missing arranged/style fields"
+  ]
+}
