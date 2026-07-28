@@ -1,0 +1,8 @@
+{
+  "round": 53,
+  "direction": "ux",
+  "verdict": "NORMAL",
+  "changes": [
+    "Retry button on result page"
+  ]
+}
