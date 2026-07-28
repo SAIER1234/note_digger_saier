@@ -1,0 +1,9 @@
+{
+  "round": 43,
+  "direction": "quality",
+  "verdict": "NORMAL",
+  "changes": [
+    "Velocity-weighted melody extraction: score = pitch*0.4 + velocity*0.6"
+  ],
+  "next": "system (starvation=1.125)"
+}
