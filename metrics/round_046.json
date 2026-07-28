@@ -1,0 +1,8 @@
+{
+  "round": 46,
+  "direction": "quality",
+  "verdict": "NORMAL",
+  "changes": [
+    "Isolated weak note filter: remove solo notes with velocity<30"
+  ]
+}
