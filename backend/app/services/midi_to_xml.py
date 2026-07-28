@@ -21,7 +21,20 @@ def midi_to_musicxml(midi_path: Path, output_path: Path | None = None, split_han
     # Add dynamic markings from MIDI velocities
     _add_dynamic_markings(score)
 
-    score.write("musicxml", fp=str(output_path))
+    # Write — with fallback for music21 instrument stream corruption
+    try:
+        score.write("musicxml", fp=str(output_path))
+    except Exception as e:
+        err_msg = str(e)
+        if "Instrument instance" in err_msg or "instrumentStream" in err_msg:
+            # music21 bug: instrument lost during grand staff split.
+            # Fallback: re-parse, skip split, write plain conversion.
+            score2 = m21.converter.parse(str(midi_path))
+            _format_as_piano_score(score2)
+            score2.write("musicxml", fp=str(output_path))
+        else:
+            raise
+
     return output_path
 
 
