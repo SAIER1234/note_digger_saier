@@ -170,6 +170,58 @@ def transcribe_cloud_http(audio_path: Path, output_dir: Path) -> Path:
     return output_path
 
 
+# --- Orpheus AI Arrangement ---
+
+def arrange_cloud_ai(midi_path: Path, output_path: Path, timeout: int = 120) -> Path:
+    """Send MIDI to Orpheus 748M GPU server for AI arrangement."""
+    client = _get_ssh()
+
+    remote_midi = "/tmp/orpheus_input.mid"
+    sftp = client.open_sftp()
+    sftp.put(str(midi_path), remote_midi)
+    sftp.close()
+
+    # Call Orpheus server on GPU (port 8001)
+    cmd = (
+        f"curl -s -X POST http://localhost:8001/arrange "
+        f"-F 'file=@{remote_midi}' "
+        f"--max-time {timeout}"
+    )
+    stdin, stdout, stderr = client.exec_command(cmd, timeout=timeout + 10)
+    result = stdout.read().decode()
+
+    try:
+        import json as _json
+        data = _json.loads(result)
+    except Exception:
+        raise RuntimeError(f"Orpheus returned invalid JSON: {result[:200]}")
+
+    if data.get("status") != "completed":
+        raise RuntimeError(f"Orpheus arrangement failed: {data}")
+
+    # Decode MIDI from hex
+    midi_bytes = bytes.fromhex(data["midi_hex"])
+    output_path.write_bytes(midi_bytes)
+
+    # Cleanup
+    client.exec_command(f"rm -f {remote_midi}", timeout=5)
+
+    return output_path
+
+
+def is_orpheus_available() -> bool:
+    """Check if Orpheus AI arrangement server is reachable."""
+    try:
+        client = _get_ssh()
+        stdin, stdout, stderr = client.exec_command(
+            "curl -s http://localhost:8001/health", timeout=10
+        )
+        result = stdout.read().decode()
+        return '"status":"healthy"' in result
+    except Exception:
+        return False
+
+
 def get_cloud_gpu_info() -> dict:
     """Get cloud GPU instance info."""
     if not CLOUD_GPU_HOST:

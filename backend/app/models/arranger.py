@@ -47,6 +47,13 @@ CHORD_PATTERNS = {
     "aug":  [0, 4, 8],      # augmented
 }
 
+# AI mode
+STYLES["ai"] = {
+    "name": "AI 智能编曲",
+    "pattern": [0],
+    "rhythm": 0.5,
+}
+
 NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 # All inversions to try for voice leading (which chord tone goes in the bass)
@@ -428,6 +435,17 @@ def arrange_piano(
         "hard": 80,
     }
     acc_velocity = velocity_map.get(difficulty, 65)
+
+    # AI mode: call Orpheus 748M GPU server
+    if style == "ai":
+        from app.models.cloud_amt import arrange_cloud_ai, is_orpheus_available
+        if is_orpheus_available():
+            try:
+                return arrange_cloud_ai(midi_path, output_path)
+            except Exception:
+                pass  # Fall through to rule-based
+        # If AI unavailable, fall through to broken style
+        style = "broken"
 
     if difficulty == "easy":
         # Easier: block chords, slower
