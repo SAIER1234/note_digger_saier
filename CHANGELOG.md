@@ -1,5 +1,13 @@
 # Note Digger — 迭代日志
 
+## Round 25 — 2026-07-28 [arr]
+- **方向**: 编曲质量 — MusicXML 动态标记 (dynamics)
+- **方法**: 逐小节分析 velocity → pp/p/mp/mf/f/ff + crescendo/decrescendo 渐强渐弱线
+- **原理**: 力度弧线(R22)已有速度数据，本轮将其写入五线谱标记
+- **效果**: pop_ballad 编曲输出 4 个动态变化: f→mf→mp→mf
+- **25轮**: quality(8)·arr(8)·ux(4)·system(4)·LOW_IMPACT(2)
+- **下轮**: ux（饥饿度0.90）
+
 ## Round 24 — 2026-07-28 [system]
 - **方向**: 系统健壮 — 磁盘追踪 + 自动清理 + 内存守卫
 - **system/status**: 新增 outputs_mb / uploads_mb / old_files_count 字段
