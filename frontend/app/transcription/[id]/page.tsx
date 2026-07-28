@@ -45,8 +45,10 @@ export default function TranscriptionPage() {
               扒谱完成
             </span>
             {result?.engine && (
-              <span className="px-2 py-0.5 rounded text-xs bg-[var(--surface-light)] text-[var(--text-muted)]">
-                {result.engine === "auto" ? "自动" : result.engine === "basic-pitch" ? "Basic Pitch" : result.engine === "simple" ? "快速" : result.engine}
+              <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                result.engine.includes("aria") ? "bg-[var(--accent)]/20 text-[var(--accent)]" : "bg-[var(--surface-light)] text-[var(--text-muted)]"
+              }`}>
+                {result.engine === "auto" ? "Auto" : result.engine.includes("aria") ? "GPU" : result.engine === "basic-pitch" ? "CPU" : result.engine === "simple" ? "Fast" : result.engine}
               </span>
             )}
           </span>
@@ -142,12 +144,18 @@ export default function TranscriptionPage() {
 
           {/* Arrangement badge */}
           {result?.arranged && (
-            <div className="flex items-center gap-2 bg-[var(--accent)]/10 border border-[var(--accent)]/20 rounded-xl px-4 py-3">
-              <span className="text-lg">🎹</span>
+            <div className={`flex items-center gap-2 rounded-xl px-4 py-3 ${
+              result.style === "ai"
+                ? "bg-gradient-to-r from-[var(--accent)]/20 to-purple-500/10 border border-[var(--accent)]/30"
+                : "bg-[var(--accent)]/10 border border-[var(--accent)]/20"
+            }`}>
+              <span className="text-lg">{result.style === "ai" ? "🤖" : "🎹"}</span>
               <div>
-                <p className="text-sm font-medium text-[var(--accent)]">自动编曲已启用</p>
+                <p className="text-sm font-medium text-[var(--accent)]">
+                  {result.style === "ai" ? "AI 智能编曲" : "自动编曲已启用"}
+                </p>
                 <p className="text-xs text-[var(--text-muted)]">
-                  风格: {result.style === "broken" ? "分解和弦" : result.style === "arpeggio" ? "琶音" : result.style === "block" ? "柱式和弦" : result.style === "alberti" ? "阿尔贝蒂低音" : result.style === "waltz" ? "华尔兹" : result.style}
+                  {result.style === "ai" ? "Orpheus 748M 神经网络" : `风格: ${result.style === "broken" ? "分解和弦" : result.style === "arpeggio" ? "琶音" : result.style === "block" ? "柱式和弦" : result.style === "alberti" ? "阿尔贝蒂低音" : result.style === "waltz" ? "华尔兹" : result.style}`}
                 </p>
               </div>
             </div>
