@@ -74,13 +74,15 @@ async def download_pdf(task_id: str):
 
 @router.get("/{task_id}/audio")
 async def download_audio(task_id: str):
-    """Download synthesized MP3 audio from MIDI."""
-    audio_path = get_output_dir(task_id) / "synthesized.mp3"
+    """Download synthesized audio (WAV) from transcribed MIDI."""
+    out_dir = get_output_dir(task_id)
+    audio_path = out_dir / "synthesized.wav"
     if not audio_path.exists():
+        midi_path = out_dir / "transcribed_clean.mid"
+        if not midi_path.exists():
+            raise HTTPException(status_code=404, detail="MIDI 文件不存在，无法合成音频")
         try:
-            audio_path = _synthesize_audio(
-                get_output_dir(task_id) / "transcribed_clean.mid"
-            )
+            audio_path = _synthesize_audio(midi_path)
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -89,8 +91,8 @@ async def download_audio(task_id: str):
 
     return FileResponse(
         audio_path,
-        media_type="audio/mpeg",
-        filename=f"{task_id}_piano.mp3",
+        media_type="audio/wav",
+        filename=f"{task_id}_piano.wav",
     )
 
 
@@ -142,15 +144,17 @@ def _render_pdf(musicxml_path: Path) -> Path:
 
 
 def _synthesize_audio(midi_path: Path) -> Path:
-    """Synthesize MIDI to MP3 using FluidSynth if available."""
-    wav_path = midi_path.with_suffix(".wav")
-    mp3_path = midi_path.with_suffix(".mp3")
+    """Synthesize MIDI to audio for preview playback.
 
-    # Try FluidSynth with a soundfont
+    Tries FluidSynth first (best quality), falls back to pure Python
+    sine-wave synthesis (always works, zero deps).
+    """
+    wav_path = midi_path.with_suffix(".wav")
+
+    # Try FluidSynth first for best quality
     soundfont_paths = [
         "/usr/share/sounds/sf2/FluidR3_GM.sf2",
         "/usr/share/sounds/sf2/TimGM6mb.sf2",
-        "C:/Program Files/MuseScore 4/sound/MuseScore_General.sf3",
     ]
 
     soundfont = None
@@ -160,22 +164,15 @@ def _synthesize_audio(midi_path: Path) -> Path:
             break
 
     if soundfont and shutil.which("fluidsynth"):
-        subprocess.run(
-            [
-                "fluidsynth", "-ni", soundfont,
-                str(midi_path), "-F", str(wav_path),
-                "-r", "44100",
-            ],
-            capture_output=True,
-            check=True,
-        )
-        # Convert WAV to MP3
-        subprocess.run(
-            ["ffmpeg", "-i", str(wav_path), "-b:a", "192k", str(mp3_path)],
-            capture_output=True,
-            check=True,
-        )
-        wav_path.unlink(missing_ok=True)
-        return mp3_path
+        try:
+            subprocess.run(
+                ["fluidsynth", "-ni", soundfont, str(midi_path), "-F", str(wav_path), "-r", "22050"],
+                capture_output=True, check=True, timeout=30,
+            )
+            return wav_path
+        except Exception:
+            pass  # Fall through to Python synth
 
-    raise RuntimeError("需要 FluidSynth + SoundFont 或 MuseScore 来合成音频")
+    # Pure Python fallback — always works
+    from app.services.midi_to_audio import midi_to_wav
+    return midi_to_wav(midi_path, wav_path)
