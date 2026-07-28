@@ -129,8 +129,9 @@ def _run_pipeline_with_progress(
         # Step 6.5: Sanitize final MIDI (remove garbage notes before MusicXML)
         cb("清洗杂音…", 90)
         try:
-            from app.services.midi_sanitizer import sanitize_midi
+            from app.services.midi_sanitizer import sanitize_midi, get_last_sanitizer_stats
             sanitize_midi(clean_midi_path, clean_midi_path)
+            quality_stats = get_last_sanitizer_stats()
         except Exception:
             pass  # Best-effort cleaning
 
@@ -168,7 +169,8 @@ def _run_pipeline_with_progress(
             "chords": chords[:8],
             "arranged": do_arrange,
             "style": arrange_style if do_arrange else None,
-            "metadata": {**meta, **midi_info, "original_filename": original_filename},
+            "metadata": {**meta, **midi_info, "original_filename": original_filename,
+                         "quality": quality_stats if quality_stats else {}},
             "percent": 100,
             "stage": "完成",
         }

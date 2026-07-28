@@ -5,20 +5,15 @@ Handles: ghost notes, infinite durations, zero velocities, overlaps.
 """
 
 from pathlib import Path
+from typing import Optional
 import pretty_midi
 
 
 def sanitize_midi(midi_path: Path, output_path: Path | None = None) -> Path:
     """Clean up a MIDI file for safe playback and sheet music rendering.
-
-    Rules:
-    - Remove notes shorter than 40ms (inaudible noise)
-    - Cap notes longer than 16 seconds (prevent duplex-maxima)
-    - Remove notes with velocity < 1
-    - Remove duplicate overlapping notes (keep louder)
-    - Remove notes outside piano range (MIDI 21-108)
-    - Enforce minimum 10ms gap between same-pitch notes
+    Returns the output path. Access sanitize_midi.last_stats for cleanup info.
     """
+    global _last_stats
     if output_path is None:
         output_path = midi_path
 
@@ -73,11 +68,11 @@ def sanitize_midi(midi_path: Path, output_path: Path | None = None) -> Path:
 
         inst.notes = new_notes
 
-    # 6. Density filter: if too many notes for duration, remove quietest
+    # 6. Density filter
+    density_removed = 0
     total_notes = sum(len(i.notes) for i in midi.instruments if not i.is_drum)
     duration = midi.get_end_time()
     if duration > 0 and total_notes > max(100, duration * 20):
-        # More than ~20 notes per second = likely noise
         keep_pct = max(0.4, min(1.0, (duration * 20) / total_notes))
         for inst in midi.instruments:
             if inst.is_drum: continue
@@ -85,10 +80,24 @@ def sanitize_midi(midi_path: Path, output_path: Path | None = None) -> Path:
             velocities = sorted([n.velocity for n in inst.notes])
             threshold_idx = int(len(velocities) * (1 - keep_pct))
             threshold = velocities[threshold_idx] if threshold_idx < len(velocities) else 0
+            before = len(inst.notes)
             inst.notes = [n for n in inst.notes if n.velocity >= threshold]
-            removed += len(velocities) - len(inst.notes)
+            density_removed += before - len(inst.notes)
+        removed += density_removed
 
     # Write cleaned MIDI
     midi.write(str(output_path))
 
+    # Store stats for retrieval
+    final_notes = sum(len(i.notes) for i in midi.instruments if not i.is_drum)
+    _stats = {"removed": removed, "capped": capped, "density_removed": density_removed,
+               "final_notes": final_notes, "original_notes": total_notes}
+    global _last_stats
+    _last_stats = _stats
+
     return output_path
+
+
+_last_stats = {}
+def get_last_sanitizer_stats() -> dict:
+    return _last_stats
