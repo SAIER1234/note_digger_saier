@@ -1,5 +1,13 @@
 # Note Digger — 迭代日志
 
+## Round 27 — 2026-07-28 [ux]
+- **方向**: 用户体验 — MIDI→WAV 音频合成 + 导出端点修复
+- **合成器**: 正弦波 + 2次谐波 + ADSR 包络，零外部依赖，始终可用
+- **策略**: FluidSynth 优先（高质量），Python 合成回退（保底）
+- **前端**: MidiPlayer (Web Audio) + 音频下载按钮，现已全功能
+- **27轮**: quality(9)·arr(8)·ux(5)·system(4)·LOW_IMPACT(2)
+- **下轮**: arrangement（饥饿度0.90）
+
 ## Round 26 — 2026-07-28 [quality]
 - **方向**: 转录质量 — 新建 2 个高难度基准用例 + 自适应预设验证
 - **新用例**: 11_fast_arpeggios (160bpm 16分, 48音/4.5s) + 12_three_voice (三声部复调)
