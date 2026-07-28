@@ -171,6 +171,15 @@ async def system_status():
     from app.middleware.logging import get_log_stats
     log_stats = get_log_stats()
 
+    # GPU status
+    gpu_info = {}
+    try:
+        from app.models.cloud_amt import is_cloud_available, is_orpheus_available, is_cloud_http_available
+        gpu_info["aria_amt"] = is_cloud_available() or is_cloud_http_available()
+        gpu_info["orpheus_arrange"] = is_orpheus_available()
+    except Exception:
+        gpu_info["error"] = "check failed"
+
     return {
         "status": "healthy",
         "uptime_hours": round(uptime_sec / 3600, 1),
@@ -185,4 +194,5 @@ async def system_status():
             "4xx": log_stats["errors_4xx"],
         },
         "recent_errors": log_stats["recent_errors"],
+        "gpu": gpu_info,
     }
