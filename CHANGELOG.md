@@ -1,5 +1,13 @@
 # Note Digger — 迭代日志
 
+## Round 32 — 2026-07-28 [arr] 🤖
+- **方向**: 编曲质量 — Orpheus 748M AI 智能编曲集成
+- **模型**: 7.48亿参数 Transformer，2.31M+ MIDI 训练，Flash Attention + RoPE
+- **部署**: 与 Aria-AMT 共存 RTX 3080 (10GB)，端口 8001
+- **前端**: 风格下拉新增「🤖 AI 智能编曲」，一键开启神经网络编曲
+- **32轮**: quality(10)·arr(11)·ux(5)·system(5)·LOW_IMPACT(2)
+- **里程碑**: 首个从零部署到生产的 AI 大模型！GPU 同时跑转录+编曲两个模型
+
 ## Round 31 — 2026-07-28 [arr]
 - **方向**: 编曲质量 — 结尾处理 (final chord + ritardando)
 - **方法**: 在所有音符后加终止和弦（块状+低八度根音），休止0.25拍，保持2拍

@@ -1,0 +1,25 @@
+{
+  "round": 32,
+  "direction": "arrangement",
+  "mode": "explore",
+  "timestamp": "2026-07-28T16:30:00Z",
+  "verdict": "NORMAL — MAJOR FEATURE",
+  "milestone": "Orpheus 748M AI Arrangement integrated into main pipeline",
+  "changes": [
+    "cloud_amt.py: arrange_cloud_ai() + is_orpheus_available()",
+    "arranger.py: 'ai' style routes to GPU Orpheus 748M server",
+    "Frontend: AI option in style dropdown",
+    "Graceful fallback to broken style if GPU unreachable"
+  ],
+  "gpu_models": {
+    "aria_amt": "port 8000, 426MB, RTX 3080",
+    "orpheus_748M": "port 8001, 2.8GB, RTX 3080"
+  },
+  "e2e_test": {
+    "status": "completed",
+    "style": "ai",
+    "arranged": true,
+    "notes": 44
+  },
+  "next_direction": "quality (starvation=1.575)"
+}

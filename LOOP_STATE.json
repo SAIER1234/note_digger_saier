@@ -1,8 +1,8 @@
 {
   "loop_version": 2,
-  "round": 31,
+  "round": 32,
   "mode": "explore",
-  "last_completed": "2026-07-28T14:08:00Z",
+  "last_completed": "2026-07-28T16:30:00Z",
   "first_started": "2026-07-27T08:30:00Z",
   "directions": {
     "quality": {
@@ -10,14 +10,14 @@
       "status": "active",
       "consecutive_low_impact": 0,
       "best_f1": 0.908,
-      "notes": "R29: Smart re-strike handling. 05_fast_notes +0.037."
+      "notes": "R29: Smart re-strike handling."
     },
     "arrangement": {
-      "last_round": 31,
+      "last_round": 32,
       "status": "active",
       "consecutive_low_impact": 0,
       "best_playability": 100,
-      "notes": "R31: Ending treatment (final chord + bass note). GPU pipeline confirmed working."
+      "notes": "R32: Orpheus 748M AI arrangement integrated. Style='ai' uses GPU neural network. Both Aria-AMT and Orpheus running on RTX 3080."
     },
     "ux": {
       "last_round": 27,
@@ -29,10 +29,11 @@
       "last_round": 30,
       "status": "active",
       "consecutive_low_impact": 0,
-      "notes": "R30: Structured request logging + error tracking. GPU deployed (aria-amt on seetacloud)."
+      "notes": "R30: Structured request logging + error tracking."
     }
   },
   "current_branch_experiments": [],
   "deployed_ports": [8001],
-  "gpu_deployed": true
+  "gpu_deployed": true,
+  "gpu_models": ["aria-amt", "orpheus-748M"]
 }
