@@ -18,6 +18,9 @@ def midi_to_musicxml(midi_path: Path, output_path: Path | None = None, split_han
     if split_hands and len(score.parts) == 1:
         _split_into_grand_staff(score)
 
+    # Add dynamic markings from MIDI velocities
+    _add_dynamic_markings(score)
+
     score.write("musicxml", fp=str(output_path))
     return output_path
 
@@ -163,6 +166,90 @@ def _assign_hands(score: m21.stream.Score) -> None:
         if pitches:
             avg = sum(pitches) / len(pitches)
             part.insert(0, clef.TrebleClef() if avg > 60 else clef.BassClef())
+
+
+def _add_dynamic_markings(score: m21.stream.Score) -> None:
+    """Add dynamic markings (pp/p/mp/mf/f/ff) and crescendo/decrescendo
+    hairpins based on MIDI note velocities.
+
+    Reads velocities from the parsed score, computes per-measure average
+    velocity, and inserts music21 Dynamic objects where the dynamic level
+    changes. Adds crescendo/decrescendo hairpins for gradual transitions.
+    """
+    from music21 import dynamics, chord, note, stream
+
+    # Velocity → dynamic mapping
+    def velocity_to_dynamic(vel: float) -> tuple[str, float]:
+        if vel < 30:
+            return 'pp', vel
+        elif vel < 45:
+            return 'p', vel
+        elif vel < 60:
+            return 'mp', vel
+        elif vel < 78:
+            return 'mf', vel
+        elif vel < 95:
+            return 'f', vel
+        else:
+            return 'ff', vel
+
+    for part in score.parts:
+        measures = list(part.getElementsByClass(stream.Measure))
+        if not measures:
+            continue
+
+        # Compute average velocity per measure
+        measure_dynamics = []
+        for m in measures:
+            velocities = []
+            for el in m.flatten().notes:
+                if hasattr(el, 'volume') and hasattr(el.volume, 'velocity'):
+                    velocities.append(el.volume.velocity)
+            if velocities:
+                avg_vel = sum(velocities) / len(velocities)
+                dyn_name, _ = velocity_to_dynamic(avg_vel)
+                measure_dynamics.append((m, avg_vel, dyn_name))
+            else:
+                # Measure with rests only — inherit previous dynamic
+                if measure_dynamics:
+                    measure_dynamics.append((m, measure_dynamics[-1][1], measure_dynamics[-1][2]))
+
+        if not measure_dynamics:
+            continue
+
+        # Insert dynamic markings where level changes
+        prev_dyn = None
+        for i, (measure, avg_vel, dyn_name) in enumerate(measure_dynamics):
+            if dyn_name != prev_dyn:
+                try:
+                    dyn = dynamics.Dynamic(dyn_name)
+                    # Place at start of measure (before first note/rest)
+                    measure.insert(0, dyn)
+                except Exception:
+                    pass
+                prev_dyn = dyn_name
+
+            # Check for crescendo/decrescendo across consecutive measures
+            if i >= 2:
+                v1 = measure_dynamics[i-2][1]
+                v2 = measure_dynamics[i-1][1]
+                v3 = measure_dynamics[i][1]
+                # Detect sustained rise or fall (>10 velocity change over 2 measures)
+                if v3 - v1 > 10 and v2 > v1:
+                    try:
+                        hairpin = dynamics.Crescendo()
+                        # Place at end of first measure in the sequence
+                        prev_measure = measure_dynamics[i-1][0]
+                        prev_measure.insert(len(list(prev_measure.notesAndRests)), hairpin)
+                    except Exception:
+                        pass
+                elif v1 - v3 > 10 and v2 < v1:
+                    try:
+                        hairpin = dynamics.Decrescendo()
+                        prev_measure = measure_dynamics[i-1][0]
+                        prev_measure.insert(len(list(prev_measure.notesAndRests)), hairpin)
+                    except Exception:
+                        pass
 
 
 def musicxml_to_pretty_string(musicxml_path: Path) -> str:
