@@ -1,0 +1,10 @@
+{
+  "round": 40,
+  "direction": "quality",
+  "verdict": "NORMAL",
+  "changes": [
+    "Density filter: remove quiet notes when >20 notes/sec",
+    "Targets AI-generated noise, preserves clean transcriptions"
+  ],
+  "next": "arrangement (starvation=1.35)"
+}

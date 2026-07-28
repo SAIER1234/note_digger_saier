@@ -1,3 +1,8 @@
+## Round 40 — 2026-07-29 [quality]
+- **方向**: 强化质量过滤
+- **密度控制**: >20音符/秒时移除最弱音符
+- **40轮**: quality(12)·arr(12)·ux(6)·system(7)·LOW_IMPACT(2)
+
 ## Round 36 — 2026-07-28 [quality]
 - **方向**: GPU vs CPU 基准评测
 - **结果**: 01_c_major_scale 双方 1.000，复杂案例运行中
