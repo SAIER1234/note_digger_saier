@@ -259,6 +259,83 @@ def generate_accompaniment(
     return acc_notes
 
 
+def _harmonize_melody(
+    melody_notes: list[pretty_midi.Note],
+    chords: list[dict],
+) -> list[pretty_midi.Note]:
+    """Add harmony notes (thirds/sixths) below melody, guided by chord context.
+
+    Rules:
+    - For each melody note, find the active chord, add a chord tone below
+    - Prefer a third below (rich, standard), fall back to a fourth/sixth
+    - Skip if melody note < 0.12s (fast passages stay clean)
+    - Skip if harmony would go below G3 (MIDI 55) — keep RH in treble range
+    - Harmony velocity = 75% of melody velocity
+    """
+    harmony_notes = []
+
+    # Build chord lookup: time → chord info
+    for note in melody_notes:
+        note_time = note.start + (note.end - note.start) * 0.5  # Middle of note
+
+        # Skip very short notes
+        if (note.end - note.start) < 0.12:
+            continue
+
+        # Find active chord
+        active_chord = None
+        for c in chords:
+            if c["start"] <= note_time < c["end"]:
+                active_chord = c
+                break
+
+        if active_chord is None:
+            continue
+
+        chord_name = active_chord["chord"]
+        # Parse chord
+        known_suffixes = ["maj7", "m7b5", "m7", "m6", "m", "sus4", "dim", "aug", "7", "6"]
+        root_str = chord_name
+        suffix = ""
+        for s in known_suffixes:
+            if chord_name.endswith(s) and len(chord_name) > len(s):
+                root_str = chord_name[:-len(s)]
+                suffix = s
+                break
+        root_pc = _note_name_to_pc(root_str) if root_str else 0
+        intervals = CHORD_PATTERNS.get(suffix, CHORD_PATTERNS[""])
+
+        # Build chord pitch classes (in MIDI range around the melody note)
+        melody_pc = note.pitch % 12
+        melody_octave = note.pitch // 12
+
+        # Try intervals below the melody: prefer 3rd (3-4 semitones), then 4th (5), then 6th (8-9)
+        preferred_intervals_below = [3, 4, 5, 8, 9]
+
+        best_harmony = None
+        for interval_down in preferred_intervals_below:
+            candidate_pc = (melody_pc - interval_down) % 12
+            # Check if this pitch class is in the chord
+            chord_pcs = {(root_pc + i) % 12 for i in intervals}
+            if candidate_pc in chord_pcs:
+                # Calculate MIDI pitch
+                candidate_pitch = note.pitch - interval_down
+                # Don't go below G3 (MIDI 55)
+                if candidate_pitch >= 55:
+                    best_harmony = candidate_pitch
+                    break
+
+        if best_harmony is not None:
+            harmony_notes.append(pretty_midi.Note(
+                velocity=int(note.velocity * 0.75),
+                pitch=best_harmony,
+                start=note.start,
+                end=note.end,
+            ))
+
+    return harmony_notes
+
+
 def arrange_piano(
     midi_path: str,
     output_path: str,
@@ -282,6 +359,9 @@ def arrange_piano(
     from app.models.chord_detect import detect_chords
     chords = detect_chords(midi_path)
 
+    # Harmonize melody (add thirds/sixths for richer RH)
+    harmony_notes_from_chord = _harmonize_melody(melody_notes, chords)
+
     # Difficulty adjustments
     velocity_map = {
         "easy": 50,
@@ -303,13 +383,16 @@ def arrange_piano(
 
     # Create output MIDI
     out_midi = pretty_midi.PrettyMIDI()
-    # RH: melody
+    # RH: melody + harmony
     rh_track = pretty_midi.Instrument(program=0, name="Right Hand")
     for n in melody_notes:
         rh_track.notes.append(pretty_midi.Note(
             velocity=n.velocity, pitch=n.pitch,
             start=n.start, end=n.end,
         ))
+    # Add harmony notes (thirds/sixths below melody)
+    for n in harmony_notes_from_chord:
+        rh_track.notes.append(n)
     out_midi.instruments.append(rh_track)
 
     # LH: accompaniment
