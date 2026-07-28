@@ -1,0 +1,11 @@
+{
+  "round": 39,
+  "direction": "quality",
+  "verdict": "MAJOR FIX",
+  "changes": [
+    "MIDI sanitizer: removes ghost notes (<40ms), caps long notes (>16s), fixes zero-velocity, removes out-of-range pitches",
+    "Runs as final pipeline step before MusicXML",
+    "Addresses user-reported issues: missing notes, infinite durations, chaotic sheet music"
+  ],
+  "next": "arrangement"
+}
