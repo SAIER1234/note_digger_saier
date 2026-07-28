@@ -39,7 +39,14 @@ export default function TranscriptionPage() {
         </button>
 
         {isCompleted && (
-          <span className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push("/")}
+              className="flex items-center gap-1 text-xs text-[var(--text-muted)] hover:text-[var(--text)] transition-colors cursor-pointer px-2 py-1 rounded-lg border border-[var(--surface-light)]"
+            >
+              🔄 再扒一首
+            </button>
+            <span className="flex items-center gap-2 text-sm">
             <span className="flex items-center gap-1 text-[var(--success)]">
               <Music className="w-3 h-3" />
               扒谱完成
@@ -52,6 +59,7 @@ export default function TranscriptionPage() {
               </span>
             )}
           </span>
+        </div>
         )}
       </div>
 
