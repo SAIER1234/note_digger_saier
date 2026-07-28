@@ -83,8 +83,9 @@ def extract_melody(midi: pretty_midi.PrettyMIDI, split_pitch: int = 60) -> tuple
             group.append(all_notes[j])
             j += 1
 
-        # Top note → melody, rest → harmony
-        group.sort(key=lambda n: n.pitch, reverse=True)
+        # Select melody note: weighted score = pitch * 0.4 + velocity * 0.6
+        # Loud mid-range notes beat quiet top notes
+        group.sort(key=lambda n: n.pitch * 0.4 + n.velocity * 0.6, reverse=True)
         melody_notes.append(group[0])
         harmony_notes.extend(group[1:])
         i = j
