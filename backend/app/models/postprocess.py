@@ -72,6 +72,19 @@ def postprocess_midi(
             for n in instrument.notes:
                 n.velocity = int(np.clip(n.velocity, 15, min(127, p90 * 1.2)))
 
+        # Isolated weak note filter: remove notes played alone with low velocity
+        for instrument in midi.instruments:
+            if len(instrument.notes) < 5:
+                continue
+            note_onsets = {}
+            for n in instrument.notes:
+                t = round(n.start, 2)
+                note_onsets[t] = note_onsets.get(t, 0) + 1
+            instrument.notes = [
+                n for n in instrument.notes
+                if not (note_onsets.get(round(n.start, 2), 0) == 1 and n.velocity < 30)
+            ]
+
         # Velocity smoothing: 3-point weighted average across time-ordered notes
         for instrument in midi.instruments:
             if len(instrument.notes) < 3:
