@@ -24,37 +24,62 @@ def midi_to_musicxml(midi_path: Path, output_path: Path | None = None, split_han
     # Add dynamic markings from MIDI velocities
     _add_dynamic_markings(score)
 
-    # Write — with fallback for music21 instrument stream corruption
+    # Write — with fallback for music21 errors
     try:
         score.write("musicxml", fp=str(output_path))
     except Exception as e:
         err_msg = str(e)
         if "Instrument instance" in err_msg or "instrumentStream" in err_msg:
-            # music21 bug: grand staff split corrupts instrument context.
-            # Fallback: raw MIDI→XML conversion, no split, no dynamics.
+            # Fallback 1: raw MIDI→XML conversion
             try:
                 score3 = m21.converter.parse(str(midi_path))
                 score3.write("musicxml", fp=str(output_path))
+                return output_path
             except Exception:
-                raise  # If even raw fails, let it bubble up
-        else:
-            raise
+                pass
+        if "duplex-maxima" in err_msg or "duration" in err_msg.lower():
+            # Fallback 2: even shorter note cap, then retry
+            import pretty_midi
+            midi = pretty_midi.PrettyMIDI(str(midi_path))
+            for inst in midi.instruments:
+                for note in inst.notes:
+                    if (note.end - note.start) > 4.0:  # Cap at 4 seconds
+                        note.end = note.start + 4.0
+            midi.write(str(midi_path))
+            score4 = m21.converter.parse(str(midi_path))
+            score4.write("musicxml", fp=str(output_path))
+            return output_path
+        raise
 
     return output_path
 
 
-def _sanitize_note_durations(midi_path: Path, max_sec: float = 32.0):
-    """Cap extremely long note durations to prevent music21 'duplex-maxima' errors."""
+def _sanitize_note_durations(midi_path: Path):
+    """Fix notes that cause music21 'duplex-maxima' errors.
+
+    The error occurs when a note's duration is too large relative to the
+    time signature context. We cap all notes to a maximum of 8 quarter notes
+    (2 whole notes), which is always safe for 4/4 time.
+    """
     import pretty_midi
     try:
         midi = pretty_midi.PrettyMIDI(str(midi_path))
         changed = False
+        # Estimate tempo to convert absolute time to beats
+        tempo = 120.0
+        try:
+            tempo = midi.estimate_tempo()
+        except Exception:
+            pass
+        max_sec = (60.0 / tempo) * 8  # 8 beats max
+
         for inst in midi.instruments:
             for note in inst.notes:
                 dur = note.end - note.start
                 if dur > max_sec:
                     note.end = note.start + max_sec
                     changed = True
+
         if changed:
             midi.write(str(midi_path))
     except Exception:
