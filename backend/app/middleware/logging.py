@@ -21,8 +21,12 @@ LOG_DIR.mkdir(exist_ok=True)
 logger = logging.getLogger("note_digger")
 logger.setLevel(logging.INFO)
 
-# File handler with rotation-sized log
-fh = logging.FileHandler(LOG_DIR / "api.log", encoding="utf-8")
+# Rotating file handler — max 5MB, keep 3 backups
+from logging.handlers import RotatingFileHandler
+fh = RotatingFileHandler(
+    LOG_DIR / "api.log", encoding="utf-8",
+    maxBytes=5 * 1024 * 1024, backupCount=3,
+)
 fh.setLevel(logging.INFO)
 fh.setFormatter(logging.Formatter(
     "%(asctime)s | %(message)s",
