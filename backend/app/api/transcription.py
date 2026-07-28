@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 
 from app.config import MAX_UPLOAD_SIZE_MB, DEV_MODE
 from app.utils.file_storage import generate_task_id, get_upload_path, get_output_dir
+from app.utils.system_guard import check_can_accept_upload
 from app.services.youtube import is_supported_url
 from app.middleware.auth import get_user_from_header
 
@@ -119,6 +120,11 @@ async def transcribe_file(
     token: str = Form(""),
 ):
     """Upload an audio file for transcription. Optional token for user tracking."""
+    # Memory guard: reject if system is under memory pressure
+    can_accept, reason = check_can_accept_upload()
+    if not can_accept:
+        raise HTTPException(status_code=503, detail=reason)
+
     content = await file.read()
     size_mb = len(content) / (1024 * 1024)
     if size_mb > MAX_UPLOAD_SIZE_MB:
@@ -166,6 +172,11 @@ async def transcribe_file(
 @router.post("/url")
 async def transcribe_url(url: str = Form(...), model: str = Form("auto")):
     """Transcribe from a YouTube or B站 URL."""
+    # Memory guard
+    can_accept, reason = check_can_accept_upload()
+    if not can_accept:
+        raise HTTPException(status_code=503, detail=reason)
+
     if not is_supported_url(url):
         raise HTTPException(status_code=400, detail="不支持的链接，目前支持 YouTube 和 B站")
 
@@ -191,6 +202,11 @@ async def transcribe_url(url: str = Form(...), model: str = Form("auto")):
 @router.post("/record")
 async def transcribe_recording(file: UploadFile = File(...), model: str = Form("auto")):
     """Transcribe a microphone recording."""
+    # Memory guard
+    can_accept, reason = check_can_accept_upload()
+    if not can_accept:
+        raise HTTPException(status_code=503, detail=reason)
+
     task_id = generate_task_id()
     upload_path = get_upload_path(task_id, "recording.wav")
     content = await file.read()

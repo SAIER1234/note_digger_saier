@@ -134,10 +134,41 @@ async def system_status():
     except Exception:
         pass
 
+    # Output/upload directory sizes
+    data_dirs = {}
+    for label, dir_path in [
+        ("outputs_mb", BASE_DIR / "outputs"),
+        ("uploads_mb", BASE_DIR / "uploads"),
+    ]:
+        try:
+            if dir_path.exists():
+                total = sum(f.stat().st_size for f in dir_path.rglob("*") if f.is_file())
+                data_dirs[label] = round(total / (1024 * 1024), 1)
+            else:
+                data_dirs[label] = 0.0
+        except Exception:
+            data_dirs[label] = -1
+
+    # Count old files (>30 days)
+    import time as _time
+    old_file_count = 0
+    now = _time.time()
+    thirty_days = 30 * 86400
+    try:
+        for d in [BASE_DIR / "outputs", BASE_DIR / "uploads"]:
+            if d.exists():
+                for f in d.rglob("*"):
+                    if f.is_file() and (now - f.stat().st_mtime) > thirty_days:
+                        old_file_count += 1
+    except Exception:
+        pass
+
     return {
         "status": "healthy",
         "uptime_hours": round(uptime_sec / 3600, 1),
         "memory": mem,
         "disk": disk,
         "total_transcriptions": total_uploads,
+        "data": data_dirs,
+        "old_files_count": old_file_count,
     }
