@@ -1,0 +1,10 @@
+{
+  "round": 41,
+  "direction": "arrangement",
+  "verdict": "NORMAL",
+  "changes": [
+    "Velocity floor: accompaniment notes >= 35 (was 30)",
+    "Prevents disappearing quiet notes"
+  ],
+  "next": "ux (starvation=1.80)"
+}
