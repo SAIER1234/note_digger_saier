@@ -98,7 +98,9 @@ def _run_pipeline_with_progress(
             detected_bpm = 120.0
 
         try:
-            chords = detect_chords(str(clean_midi_path), bpm=detected_bpm)
+            # Adaptive window: slower songs need wider chord detection window
+            chord_window = max(0.5, min(2.0, 120.0 / max(detected_bpm, 40)))
+            chords = detect_chords(str(clean_midi_path), window_beats=chord_window, bpm=detected_bpm)
             chord_line = format_chord_line(chords)
         except Exception:
             chords = []
