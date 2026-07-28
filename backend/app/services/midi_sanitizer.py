@@ -73,6 +73,21 @@ def sanitize_midi(midi_path: Path, output_path: Path | None = None) -> Path:
 
         inst.notes = new_notes
 
+    # 6. Density filter: if too many notes for duration, remove quietest
+    total_notes = sum(len(i.notes) for i in midi.instruments if not i.is_drum)
+    duration = midi.get_end_time()
+    if duration > 0 and total_notes > max(100, duration * 20):
+        # More than ~20 notes per second = likely noise
+        keep_pct = max(0.4, min(1.0, (duration * 20) / total_notes))
+        for inst in midi.instruments:
+            if inst.is_drum: continue
+            if len(inst.notes) < 3: continue
+            velocities = sorted([n.velocity for n in inst.notes])
+            threshold_idx = int(len(velocities) * (1 - keep_pct))
+            threshold = velocities[threshold_idx] if threshold_idx < len(velocities) else 0
+            inst.notes = [n for n in inst.notes if n.velocity >= threshold]
+            removed += len(velocities) - len(inst.notes)
+
     # Write cleaned MIDI
     midi.write(str(output_path))
 
