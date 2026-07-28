@@ -27,11 +27,13 @@ def midi_to_musicxml(midi_path: Path, output_path: Path | None = None, split_han
     except Exception as e:
         err_msg = str(e)
         if "Instrument instance" in err_msg or "instrumentStream" in err_msg:
-            # music21 bug: instrument lost during grand staff split.
-            # Fallback: re-parse, skip split, write plain conversion.
-            score2 = m21.converter.parse(str(midi_path))
-            _format_as_piano_score(score2)
-            score2.write("musicxml", fp=str(output_path))
+            # music21 bug: grand staff split corrupts instrument context.
+            # Fallback: raw MIDI→XML conversion, no split, no dynamics.
+            try:
+                score3 = m21.converter.parse(str(midi_path))
+                score3.write("musicxml", fp=str(output_path))
+            except Exception:
+                raise  # If even raw fails, let it bubble up
         else:
             raise
 
@@ -138,6 +140,12 @@ def _split_into_grand_staff(score):
     score.remove(original_part)
     score.insert(0, rh_part)
     score.insert(1, lh_part)
+
+    # Ensure instrument contexts are proper after the split
+    try:
+        score.makeNotation(inPlace=True)
+    except Exception:
+        pass  # Best-effort: if notation rebuild fails, continue anyway
 
 
 def _format_as_piano_score(score: m21.stream.Score) -> None:
