@@ -89,7 +89,28 @@ async def health_check():
 @app.get(f"{API_PREFIX}/health")
 async def api_health_check():
     """Health check accessible via Nginx /api/ proxy."""
-    return {"status": "healthy"}
+    # Check critical imports
+    deps = {}
+    for name, mod in [("music21", "music21"), ("pretty_midi", "pretty_midi"),
+                       ("librosa", "librosa"), ("torch", "torch")]:
+        try:
+            __import__(mod)
+            deps[name] = "ok"
+        except Exception:
+            deps[name] = "missing"
+
+    # Disk/memory warnings
+    import os
+    warnings = []
+    try:
+        stat = os.statvfs(".")
+        free_gb = (stat.f_frsize * stat.f_bavail) / (1024**3)
+        if free_gb < 5:
+            warnings.append(f"disk_low:{free_gb:.1f}GB")
+    except Exception:
+        pass
+
+    return {"status": "healthy", "deps": deps, "warnings": warnings or None}
 
 
 @app.get(f"{API_PREFIX}/system/status")
