@@ -1,0 +1,20 @@
+{
+  "round": 23,
+  "direction": "quality",
+  "mode": "explore",
+  "timestamp": "2026-07-28T08:12:00Z",
+  "verdict": "LOW_IMPACT",
+  "changes": [
+    "Adaptive quality preset: analyze_audio_density() with librosa onset detection + spectral centroid",
+    "select_quality_preset(): fast(>5 onsets/s)→medium, normal(2-5)→high, sparse(<2)→high",
+    "Default changed from fixed 'high' to 'adaptive' in transcription pipeline",
+    "Thresholds tuned: 05_fast_notes (7.2 onsets/s) correctly classified as 'fast'"
+  ],
+  "benchmark": {
+    "adaptive_vs_high": "delta=0.000 across all 10 cases",
+    "05_fast_notes": "medium preset triggered but F1 unchanged (0.820 for both high and medium)",
+    "02_arpeggio": "not resolved — 1.3 onsets/s detected (notes blend in spectrogram, not a threshold issue)",
+    "root_cause": "Current benchmark cases don't exercise the adaptive threshold. Real fast pieces (Chopin etudes etc.) would benefit."
+  },
+  "next_direction": "system (starvation=1.05)"
+}

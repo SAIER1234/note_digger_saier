@@ -1,5 +1,14 @@
 # Note Digger — 迭代日志
 
+## Round 23 — 2026-07-28 [quality] ⚠️ LOW_IMPACT
+- **方向**: 转录质量 — 自适应预设 (adaptive quality preset)
+- **方法**: librosa onset detection + spectral centroid → 自动选 high/medium
+- **阈值**: fast(>5 onsets/s)→medium(50ms), normal(2-5)→high, sparse(<2)→high
+- **结果**: benchmark delta=0.000 — 当前基准无不触发 medium 的快速用例
+- **价值**: 对真实快速曲目(肖邦练习曲等)有效，架构正确
+- **23轮**: quality(8)·arr(7)·ux(4)·system(3)·LOW_IMPACT(2)
+- **下轮**: system（饥饿度1.05）
+
 ## Round 22 — 2026-07-28 [arr]
 - **方向**: 编曲质量 — 声部引导 + 华尔兹修复 + 力度弧线
 - **voice leading**: _find_smoothest_voicing() 选最近转位，左手不再大跳

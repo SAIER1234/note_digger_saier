@@ -68,13 +68,14 @@ def analyze_audio_density(audio_path: Path) -> dict:
     spectral = np.abs(librosa.stft(y, n_fft=2048, hop_length=512))
     centroid = float(librosa.feature.spectral_centroid(S=spectral, sr=sr).mean())
 
-    # Density classification
-    if onsets_per_second > 10:
-        density = "fast"       # Rapid passages — need sensitive detection
-    elif onsets_per_second > 5:
-        density = "normal"     # Moderate tempo
+    # Density classification (tuned for piano — onsets are harder to detect
+    # than percussive instruments, so thresholds are lower than typical)
+    if onsets_per_second > 5:
+        density = "fast"       # Rapid passages — need medium preset (50ms min note)
+    elif onsets_per_second > 2:
+        density = "normal"     # Moderate tempo — high preset works well
     else:
-        density = "sparse"     # Slow/sparse — prioritize precision over recall
+        density = "sparse"     # Very sparse — high preset, prioritize precision
 
     return {
         "onsets_per_second": round(onsets_per_second, 1),
@@ -87,9 +88,9 @@ def analyze_audio_density(audio_path: Path) -> dict:
 def select_quality_preset(audio_path: Path) -> str:
     """Select best quality preset based on audio characteristics.
 
-    - fast (>10 onsets/s):  'medium' — lower threshold, shorter min note (50ms)
-    - normal (5-10/s):      'high'   — balanced, good precision
-    - sparse (<5/s):        'high'   — prioritize clean output over recall
+    - fast (>5 onsets/s):    'medium' — lower threshold, shorter min note (50ms)
+    - normal (2-5/s):        'high'   — balanced, good precision
+    - sparse (<2/s):         'high'   — prioritize clean output over recall
 
     Falls back to 'high' on any analysis error.
     """
