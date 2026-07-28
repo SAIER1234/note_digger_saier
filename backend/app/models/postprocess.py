@@ -34,7 +34,13 @@ def postprocess_midi(
     if quantize:
         tempo = _detect_tempo_from_notes(midi) or 120.0
         beat_duration = 60.0 / tempo
-        grid = beat_duration / 4  # 16th note grid
+        # Adaptive grid: faster pieces need finer grid
+        if tempo > 160:
+            grid = beat_duration / 8   # 32nd notes for fast pieces
+        elif tempo > 100:
+            grid = beat_duration / 4   # 16th notes (normal)
+        else:
+            grid = beat_duration / 2   # 8th notes for ballads
 
         for instrument in midi.instruments:
             for note in instrument.notes:
