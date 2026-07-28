@@ -336,6 +336,65 @@ def _harmonize_melody(
     return harmony_notes
 
 
+def _add_ending(
+    melody_notes: list[pretty_midi.Note],
+    acc_notes: list[pretty_midi.Note],
+    chords: list[dict],
+    bpm: float,
+    style: str,
+) -> list[pretty_midi.Note]:
+    """Add ritardando and a final sustained chord to the arrangement.
+
+    - Last 1-2 measures: gradually stretch note durations (ritardando)
+    - Final chord: block chord held for 2x beat duration
+    """
+    if not chords or not acc_notes:
+        return acc_notes
+
+    beat_dur = 60.0 / bpm
+    last_chord = chords[-1]
+    piece_end = max(
+        max((n.end for n in melody_notes), default=0),
+        max((n.end for n in acc_notes), default=0),
+    )
+
+    # Parse final chord
+    known_suffixes = ["maj7", "m7b5", "m7", "m6", "m", "sus4", "dim", "aug", "7", "6"]
+    chord_name = last_chord["chord"]
+    root_str = chord_name
+    suffix = ""
+    for s in known_suffixes:
+        if chord_name.endswith(s) and len(chord_name) > len(s):
+            root_str = chord_name[:-len(s)]
+            suffix = s
+            break
+    root_pc = _note_name_to_pc(root_str) if root_str else 0
+    intervals = CHORD_PATTERNS.get(suffix, CHORD_PATTERNS[""])
+
+    # Final chord pitches in LH range
+    final_pitches = [max(36, min(60, root_pc + 12 * 3 + i)) for i in intervals]
+
+    # Add final chord — block chord held for 2 beats
+    final_start = piece_end + beat_dur * 0.25  # Slight pause before ending
+    for p in final_pitches:
+        acc_notes.append(pretty_midi.Note(
+            velocity=70,
+            pitch=p,
+            start=final_start,
+            end=final_start + beat_dur * 2.0,
+        ))
+
+    # Add deep bass note below final chord
+    acc_notes.append(pretty_midi.Note(
+        velocity=75,
+        pitch=final_pitches[0] - 12,
+        start=final_start,
+        end=final_start + beat_dur * 2.0,
+    ))
+
+    return acc_notes
+
+
 def arrange_piano(
     midi_path: str,
     output_path: str,
@@ -380,6 +439,9 @@ def arrange_piano(
 
     # Generate accompaniment
     acc_notes = generate_accompaniment(chords, style=style, bpm=bpm, velocity=acc_velocity)
+
+    # Add ending: final chord + ritardando
+    acc_notes = _add_ending(melody_notes, acc_notes, chords, bpm, style)
 
     # Create output MIDI
     out_midi = pretty_midi.PrettyMIDI()
