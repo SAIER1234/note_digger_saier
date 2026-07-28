@@ -1,5 +1,13 @@
 # Note Digger — 迭代日志
 
+## Round 26 — 2026-07-28 [quality]
+- **方向**: 转录质量 — 新建 2 个高难度基准用例 + 自适应预设验证
+- **新用例**: 11_fast_arpeggios (160bpm 16分, 48音/4.5s) + 12_three_voice (三声部复调)
+- **自适应验证**: case 11 high=0.000→adaptive=0.118 (BIG WIN, 捕捉到快速音符)
+- **基建**: gen_benchmark.py 正弦波合成 MIDI→WAV, 共12个基准用例
+- **26轮**: quality(9)·arr(8)·ux(4)·system(4)·LOW_IMPACT(2)
+- **下轮**: ux（饥饿度1.50）
+
 ## Round 25 — 2026-07-28 [arr]
 - **方向**: 编曲质量 — MusicXML 动态标记 (dynamics)
 - **方法**: 逐小节分析 velocity → pp/p/mp/mf/f/ff + crescendo/decrescendo 渐强渐弱线
