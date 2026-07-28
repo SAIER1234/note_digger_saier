@@ -44,6 +44,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Request logging middleware (first, so it wraps all others)
+from app.middleware.logging import RequestLoggingMiddleware
+app.add_middleware(RequestLoggingMiddleware)
+
 # Rate limiting middleware
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
@@ -163,6 +167,10 @@ async def system_status():
     except Exception:
         pass
 
+    # Log stats
+    from app.middleware.logging import get_log_stats
+    log_stats = get_log_stats()
+
     return {
         "status": "healthy",
         "uptime_hours": round(uptime_sec / 3600, 1),
@@ -171,4 +179,10 @@ async def system_status():
         "total_transcriptions": total_uploads,
         "data": data_dirs,
         "old_files_count": old_file_count,
+        "requests_today": log_stats["requests_today"],
+        "errors": {
+            "5xx": log_stats["errors_5xx"],
+            "4xx": log_stats["errors_4xx"],
+        },
+        "recent_errors": log_stats["recent_errors"],
     }
