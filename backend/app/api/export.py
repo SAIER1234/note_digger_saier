@@ -1,7 +1,9 @@
-"""Export API routes: download MIDI, MusicXML, PDF."""
+"""Export API routes: download MIDI, MusicXML, PDF, ZIP."""
 
 import shutil
 import subprocess
+import zipfile
+import io
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
@@ -105,6 +107,37 @@ async def get_musicxml_text(task_id: str):
     return PlainTextResponse(
         xml_path.read_text(encoding="utf-8"),
         media_type="application/xml",
+    )
+
+
+@router.get("/{task_id}/zip")
+async def download_zip(task_id: str):
+    """Download all files (MIDI + MusicXML + audio) as a ZIP archive."""
+    out_dir = get_output_dir(task_id)
+    midi_path = out_dir / "transcribed_clean.mid"
+    xml_path = out_dir / "score.musicxml"
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        if midi_path.exists():
+            zf.write(str(midi_path), f"{task_id}_piano.mid")
+        if xml_path.exists():
+            zf.write(str(xml_path), f"{task_id}_score.musicxml")
+        # Try to include audio if available
+        audio_path = out_dir / "synthesized.wav"
+        if not audio_path.exists():
+            try:
+                audio_path = _synthesize_audio(midi_path) if midi_path.exists() else None
+            except Exception:
+                audio_path = None
+        if audio_path and audio_path.exists():
+            zf.write(str(audio_path), f"{task_id}_piano.wav")
+
+    buf.seek(0)
+    return FileResponse(
+        buf,
+        media_type="application/zip",
+        filename=f"{task_id}_notedigger.zip",
     )
 
 

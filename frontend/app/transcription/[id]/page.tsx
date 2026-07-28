@@ -6,7 +6,7 @@ import { useTranscription } from "@/hooks/useTranscription"
 import { ScoreViewer } from "@/components/score/ScoreViewer"
 import { ScoreEditor } from "@/components/score/ScoreEditor"
 import { MidiPlayer } from "@/components/score/MidiPlayer"
-import { getMidiUrl, getMusicXmlUrl, getPdfUrl, getAudioUrl } from "@/lib/api"
+import { getMidiUrl, getMusicXmlUrl, getPdfUrl, getAudioUrl, getZipUrl } from "@/lib/api"
 import { formatDuration } from "@/lib/utils"
 import { toast } from "sonner"
 
@@ -182,11 +182,19 @@ export default function TranscriptionPage() {
 
           {/* Export buttons */}
           <div className="grid grid-cols-2 md:flex md:flex-wrap gap-2 md:gap-3 justify-center">
+            {/* Download All button */}
+            <button
+              onClick={() => window.open(getZipUrl(taskId), "_blank")}
+              className="flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 rounded-xl bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)] transition-all cursor-pointer text-xs md:text-sm font-medium"
+            >
+              <Download className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              一键下载全部
+            </button>
             {[
-              { url: getPdfUrl(taskId), label: "PDF 谱面", icon: FileText },
-              { url: getMusicXmlUrl(taskId), label: "MusicXML", icon: FileType },
+              { url: getPdfUrl(taskId), label: "PDF", icon: FileText },
+              { url: getMusicXmlUrl(taskId), label: "XML", icon: FileType },
               { url: getMidiUrl(taskId), label: "MIDI", icon: Music },
-              { url: getAudioUrl(taskId), label: "MP3", icon: Volume2 },
+              { url: getAudioUrl(taskId), label: "音频", icon: Volume2 },
             ].map(({ url, label, icon: Icon }) => (
               <button
                 key={label}

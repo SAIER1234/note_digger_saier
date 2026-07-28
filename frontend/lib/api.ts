@@ -158,3 +158,7 @@ export function getPdfUrl(taskId: string): string {
 export function getAudioUrl(taskId: string): string {
   return `${getApiBase()}${API_PREFIX}/export/${taskId}/audio`
 }
+
+export function getZipUrl(taskId: string): string {
+  return `${getApiBase()}${API_PREFIX}/export/${taskId}/zip`
+}
