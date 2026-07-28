@@ -1,5 +1,13 @@
 # Note Digger — 迭代日志
 
+## Round 28 — 2026-07-28 [arr]
+- **方向**: 编曲质量 — 旋律和声化 (thirds/sixths below melody)
+- **方法**: 每个旋律音找当前和弦→选和弦内音下方三度/六度→加 harmony 音符
+- **规则**: 跳过 <0.12s 快速音符, harmony ≥ G3 (保持在 treble), 力度=旋律×75%
+- **效果**: pop_ballad 100% 旋律拍点都有和声, playability 99
+- **28轮**: quality(9)·arr(9)·ux(5)·system(4)·LOW_IMPACT(2)
+- **下轮**: quality（饥饿度1.05）
+
 ## Round 27 — 2026-07-28 [ux]
 - **方向**: 用户体验 — MIDI→WAV 音频合成 + 导出端点修复
 - **合成器**: 正弦波 + 2次谐波 + ADSR 包络，零外部依赖，始终可用

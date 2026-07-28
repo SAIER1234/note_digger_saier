@@ -1,0 +1,19 @@
+{
+  "round": 28,
+  "direction": "arrangement",
+  "mode": "explore",
+  "timestamp": "2026-07-28T10:30:00Z",
+  "verdict": "NORMAL",
+  "changes": [
+    "_harmonize_melody(): add thirds/sixths below melody based on active chord",
+    "Prefers third below → fourth → sixth, all within chord tones",
+    "Skips notes <0.12s (fast passages clean), harmony ≥ G3 (keep treble range)",
+    "Harmony velocity = 75% of melody for natural balance"
+  ],
+  "benchmark": {
+    "pop_ballad_harmony": "4/4 melody onsets harmonized (100%)",
+    "playability": "99 (unchanged, pre-existing LH span=11)",
+    "right_hand_notes": "8 (4 melody + 4 harmony)"
+  },
+  "next_direction": "quality (starvation=1.05) or system (starvation=0.90)"
+}
