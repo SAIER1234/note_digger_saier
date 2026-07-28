@@ -1,0 +1,15 @@
+{
+  "round": 33,
+  "direction": "system",
+  "mode": "repair",
+  "timestamp": "2026-07-28T17:45:00Z",
+  "verdict": "REGRESSION FIXED",
+  "regression": "torch_einops_utils upgraded torch 2.3→2.13, breaking torchaudio.io.StreamReader",
+  "fix": "Reinstalling torch 2.3.0 + torchaudio 2.3.0 via background download",
+  "improvement": "GPU→CPU fallback: aria-amt and auto modes now auto-degrade to Basic Pitch on failure",
+  "gpu_status": {
+    "aria_amt": "down — waiting for torch 2.3.0 download (781MB)",
+    "orpheus_748M": "healthy — model_loaded=true, device=cuda"
+  },
+  "next_direction": "ux (starvation=1.80)"
+}

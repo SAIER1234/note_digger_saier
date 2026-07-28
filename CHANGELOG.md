@@ -1,5 +1,14 @@
 # Note Digger — 迭代日志
 
+## Round 33 — 2026-07-28 [system] ⚠️ REPAIR
+- **方向**: 系统修复 — GPU→CPU 自动降级 + torch 版本冲突修复
+- **问题**: torch_einops_utils 把 torch 从 2.3 升到 2.13，torchaudio.io 崩溃
+- **修复**: 后台重装 torch 2.3.0 + torchaudio 2.3.0
+- **改进**: aria-amt/auto 模式现在 GPU 挂了自动切 Basic Pitch，不丢请求
+- **Orpheus 748M**: 未受影响，始终健康
+- **33轮**: quality(10)·arr(11)·ux(5)·system(6)·LOW_IMPACT(2)
+- **教训**: 安装新依赖前先检查依赖树，避免自动升级核心包
+
 ## Round 32 — 2026-07-28 [arr] 🤖
 - **方向**: 编曲质量 — Orpheus 748M AI 智能编曲集成
 - **模型**: 7.48亿参数 Transformer，2.31M+ MIDI 训练，Flash Attention + RoPE

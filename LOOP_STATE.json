@@ -1,8 +1,8 @@
 {
   "loop_version": 2,
-  "round": 32,
-  "mode": "explore",
-  "last_completed": "2026-07-28T16:30:00Z",
+  "round": 33,
+  "mode": "repair",
+  "last_completed": "2026-07-28T17:45:00Z",
   "first_started": "2026-07-27T08:30:00Z",
   "directions": {
     "quality": {
@@ -17,7 +17,7 @@
       "status": "active",
       "consecutive_low_impact": 0,
       "best_playability": 100,
-      "notes": "R32: Orpheus 748M AI arrangement integrated. Style='ai' uses GPU neural network. Both Aria-AMT and Orpheus running on RTX 3080."
+      "notes": "R32: Orpheus 748M AI arrangement. Orpheus still healthy."
     },
     "ux": {
       "last_round": 27,
@@ -26,14 +26,14 @@
       "notes": "R27: MIDI→WAV audio synthesis + export fix."
     },
     "system": {
-      "last_round": 30,
+      "last_round": 33,
       "status": "active",
       "consecutive_low_impact": 0,
-      "notes": "R30: Structured request logging + error tracking."
+      "notes": "R33: GPU→CPU fallback. Aria-AMT regression (torch conflict) being fixed."
     }
   },
   "current_branch_experiments": [],
   "deployed_ports": [8001],
   "gpu_deployed": true,
-  "gpu_models": ["aria-amt", "orpheus-748M"]
+  "gpu_models": ["orpheus-748M"]
 }
