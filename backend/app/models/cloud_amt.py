@@ -40,13 +40,18 @@ def _get_ssh():
 
 
 def is_cloud_available() -> bool:
-    """Check if cloud GPU is configured and reachable via SSH."""
+    """Check if cloud GPU is reachable (HTTP first, then SSH)."""
+    # AutoDL / HTTP mode (preferred)
+    if CLOUD_HTTP_URL:
+        return is_cloud_http_available()
+    # Legacy SSH mode (seetacloud etc.)
     if not CLOUD_GPU_HOST:
         return False
     try:
         client = _get_ssh()
         stdin, stdout, stderr = client.exec_command("nvidia-smi --query-gpu=name --format=csv,noheader", timeout=10)
-        return "3080" in stdout.read().decode() or "GeForce" in stdout.read().decode()
+        output = stdout.read().decode()
+        return "3080" in output or "GeForce" in output or "RTX" in output or "A4000" in output
     except Exception:
         return False
 
@@ -93,6 +98,73 @@ def transcribe_cloud(audio_path: Path, output_dir: Path, timeout: int = 180) -> 
 
     # Cleanup remote temp files
     client.exec_command(f"rm -rf {work_dir} {remote_audio}", timeout=5)
+
+    return output_path
+
+
+# --- HTTP mode for AutoDL / any GPU server running aria_server.py ---
+
+CLOUD_HTTP_URL = os.getenv("CLOUD_GPU_HTTP_URL", "")
+
+
+def is_cloud_http_available() -> bool:
+    """Check if cloud GPU is reachable via HTTP (AutoDL mode)."""
+    if not CLOUD_HTTP_URL:
+        return False
+    try:
+        import urllib.request
+        req = urllib.request.Request(
+            f"{CLOUD_HTTP_URL.rstrip('/')}/health",
+            headers={"User-Agent": "NoteDigger/1.0"},
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            return resp.status == 200
+    except Exception:
+        return False
+
+
+def transcribe_cloud_http(audio_path: Path, output_dir: Path) -> Path:
+    """Transcribe via HTTP POST to GPU server running aria_server.py."""
+    import urllib.request
+    import urllib.error
+    import json as _json
+
+    url = CLOUD_HTTP_URL.rstrip("/") + "/transcribe"
+
+    with open(audio_path, "rb") as f:
+        audio_data = f.read()
+
+    boundary = "----NoteDiggerBoundary"
+    body = (
+        f"--{boundary}\r\n"
+        f'Content-Disposition: form-data; name="file"; filename="{audio_path.name}"\r\n'
+        f"Content-Type: audio/wav\r\n\r\n"
+    ).encode() + audio_data + f"\r\n--{boundary}--\r\n".encode()
+
+    req = urllib.request.Request(
+        url,
+        data=body,
+        headers={
+            "Content-Type": f"multipart/form-data; boundary={boundary}",
+            "User-Agent": "NoteDigger/1.0",
+        },
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=300) as resp:
+            result = _json.loads(resp.read().decode())
+    except urllib.error.HTTPError as e:
+        body = e.read().decode()[:300]
+        raise RuntimeError(f"GPU server error {e.code}: {body}")
+    except Exception as e:
+        raise RuntimeError(f"GPU HTTP request failed: {e}")
+
+    if result.get("status") != "completed":
+        raise RuntimeError(f"Transcription failed: {result.get('detail', str(result)[:200])}")
+
+    midi_bytes = bytes.fromhex(result["midi_hex"])
+    output_path = output_dir / f"{audio_path.stem}_aria.mid"
+    output_path.write_bytes(midi_bytes)
 
     return output_path
 

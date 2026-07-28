@@ -12,7 +12,7 @@ from app.services.youtube import download_audio, is_supported_url
 from app.models.aria_amt import transcribe_audio_python
 from app.models.basic_pitch_model import transcribe_basic_pitch
 from app.models.simple_amt import transcribe_simple
-from app.models.cloud_amt import transcribe_cloud, is_cloud_available
+from app.models.cloud_amt import transcribe_cloud, transcribe_cloud_http, is_cloud_available, is_cloud_http_available
 from app.models.chord_detect import detect_chords, format_chord_line
 from app.models.arranger import arrange_piano, STYLES
 from app.models.postprocess import postprocess_midi, get_midi_info
@@ -53,8 +53,10 @@ def _run_pipeline_with_progress(
 
         cb("AI 识别音符中…（最慢的一步）", 50)
         if model_choice == "aria-amt":
-            # Try cloud GPU first, then local CUDA
-            if is_cloud_available():
+            # Try cloud GPU first (HTTP preferred, then SSH, then local CUDA)
+            if is_cloud_http_available():
+                raw_midi_path = transcribe_cloud_http(processed_path, output_dir)
+            elif is_cloud_available():
                 raw_midi_path = transcribe_cloud(processed_path, output_dir)
             else:
                 raw_midi_path = transcribe_audio_python(processed_path, output_dir, model="medium-double")
@@ -63,8 +65,10 @@ def _run_pipeline_with_progress(
         elif model_choice == "simple":
             raw_midi_path = transcribe_simple(processed_path, output_dir)
         else:
-            # Auto-select: cloud > basic-pitch > simple
-            if is_cloud_available():
+            # Auto-select: cloud HTTP > cloud SSH > basic-pitch
+            if is_cloud_http_available():
+                raw_midi_path = transcribe_cloud_http(processed_path, output_dir)
+            elif is_cloud_available():
                 raw_midi_path = transcribe_cloud(processed_path, output_dir)
             else:
                 raw_midi_path = transcribe_basic_pitch(processed_path, output_dir, quality="adaptive")
