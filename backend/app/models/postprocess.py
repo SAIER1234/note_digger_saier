@@ -270,11 +270,19 @@ def get_midi_info(midi_path: Path) -> dict:
         for note in inst.notes:
             pitches.append(note.pitch)
 
+    # Tempo estimation — guard against empty/single-note MIDI
+    tempo = None
+    if total_notes >= 2:
+        try:
+            tempo = round(midi.estimate_tempo(), 1)
+        except Exception:
+            tempo = None
+
     return {
         "total_notes": total_notes,
         "duration_seconds": round(total_duration, 2),
         "num_tracks": len(midi.instruments),
         "pitch_range": f"{min(pitches)}-{max(pitches)}" if pitches else "N/A",
-        "tempo": round(midi.estimate_tempo(), 1) if total_notes >= 2 else None,
+        "tempo": tempo,
         "has_drums": any(instrument.is_drum for instrument in midi.instruments),
     }

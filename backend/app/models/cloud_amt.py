@@ -71,10 +71,11 @@ def transcribe_cloud(audio_path: Path, output_dir: Path, timeout: int = 180) -> 
     sftp.put(str(audio_path), remote_audio)
     sftp.close()
 
-    # Run Aria-AMT
+    # Run Aria-AMT (must source conda env for CLI path)
     work_dir = f"/tmp/note_digger_{audio_path.stem}"
     cmd = (
         f"mkdir -p {work_dir} && "
+        f"source /root/miniconda3/bin/activate aria && "
         f"aria-amt transcribe medium-double {CLOUD_GPU_CHECKPOINT} "
         f"-load_path {remote_audio} -save_dir {work_dir} -bs 1 -compile"
     )
