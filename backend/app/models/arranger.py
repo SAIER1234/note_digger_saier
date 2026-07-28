@@ -258,10 +258,12 @@ def generate_accompaniment(
                     midi_pitch = chord_voicing[step]
                     chord_notes_played.append(midi_pitch)
 
-                    # Velocity: accent on downbeats, softer on upbeats
-                    is_downbeat = (pattern_idx % len(pattern) == 0)
-                    base_vel = velocity + 5 if is_downbeat else velocity - 3
-                    vel = max(30, min(100, int(base_vel * arc_mult) + random.randint(-3, 3)))
+                    # Velocity: beat-aware groove accents
+                    beats_elapsed = int(t / beat_duration)
+                    is_strong = (beats_elapsed % 4 == 0)
+                    is_medium = (beats_elapsed % 4 == 2)
+                    base_vel = velocity + 8 if is_strong else velocity + 3 if is_medium else velocity - 2
+                    vel = max(velocity_floor, min(100, int(base_vel * arc_mult) + random.randint(-2, 2)))
 
                     acc_notes.append(pretty_midi.Note(
                         velocity=vel,
