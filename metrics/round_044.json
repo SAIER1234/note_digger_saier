@@ -1,0 +1,10 @@
+{
+  "round": 44,
+  "direction": "arrangement",
+  "verdict": "NORMAL",
+  "changes": [
+    "New piano solo style: wide broken chords, triplet feel",
+    "Frontend: piano option in style dropdown"
+  ],
+  "next": "system (starvation=1.35)"
+}
