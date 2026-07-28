@@ -1,16 +1,16 @@
 {
   "loop_version": 2,
-  "round": 35,
+  "round": 36,
   "mode": "explore",
   "last_completed": "2026-07-28T17:45:00Z",
   "first_started": "2026-07-27T08:30:00Z",
   "directions": {
     "quality": {
-      "last_round": 29,
+      "last_round": 36,
       "status": "active",
       "consecutive_low_impact": 0,
       "best_f1": 0.908,
-      "notes": "R29: Smart re-strike. Need GPU benchmark for real comparison."
+      "notes": "R36: GPU vs CPU benchmark. Both 1.0 on simple. Complex cases pending."
     },
     "arrangement": {
       "last_round": 32,

@@ -1,3 +1,7 @@
+## Round 36 — 2026-07-28 [quality]
+- **方向**: GPU vs CPU 基准评测
+- **结果**: 01_c_major_scale 双方 1.000，复杂案例运行中
+- **36轮**: quality(11)·arr(11)·ux(6)·system(6)·LOW_IMPACT(2)
 # Note Digger — 迭代日志
 
 ## Round 35 — 2026-07-28 [ux]

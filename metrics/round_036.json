@@ -1,0 +1,12 @@
+{
+  "round": 36,
+  "direction": "quality",
+  "verdict": "NORMAL",
+  "changes": [
+    "GPU vs CPU benchmark on 4 benchmark cases",
+    "01_c_major_scale: both 1.000 (too easy to differentiate)",
+    "Cases 2-4 still running \u2014 arpeggios/chords will show real delta"
+  ],
+  "note": "GPU stable. Real quality delta needs complex cases.",
+  "next": "arrangement (starvation=1.80)"
+}
