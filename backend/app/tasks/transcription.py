@@ -53,24 +53,31 @@ def _run_pipeline_with_progress(
 
         cb("AI 识别音符中…（最慢的一步）", 50)
         if model_choice == "aria-amt":
-            # Try cloud GPU first (HTTP preferred, then SSH, then local CUDA)
-            if is_cloud_http_available():
-                raw_midi_path = transcribe_cloud_http(processed_path, output_dir)
-            elif is_cloud_available():
-                raw_midi_path = transcribe_cloud(processed_path, output_dir)
-            else:
-                raw_midi_path = transcribe_audio_python(processed_path, output_dir, model="medium-double")
+            # Try cloud GPU first, fall back to Basic Pitch on failure
+            try:
+                if is_cloud_http_available():
+                    raw_midi_path = transcribe_cloud_http(processed_path, output_dir)
+                elif is_cloud_available():
+                    raw_midi_path = transcribe_cloud(processed_path, output_dir)
+                else:
+                    raw_midi_path = transcribe_audio_python(processed_path, output_dir, model="medium-double")
+            except Exception:
+                # GPU failed — fall back to CPU transcription
+                raw_midi_path = transcribe_basic_pitch(processed_path, output_dir, quality="adaptive")
         elif model_choice == "basic-pitch":
             raw_midi_path = transcribe_basic_pitch(processed_path, output_dir, quality="adaptive")
         elif model_choice == "simple":
             raw_midi_path = transcribe_simple(processed_path, output_dir)
         else:
-            # Auto-select: cloud HTTP > cloud SSH > basic-pitch
-            if is_cloud_http_available():
-                raw_midi_path = transcribe_cloud_http(processed_path, output_dir)
-            elif is_cloud_available():
-                raw_midi_path = transcribe_cloud(processed_path, output_dir)
-            else:
+            # Auto-select: try GPU first, fall back to CPU
+            try:
+                if is_cloud_http_available():
+                    raw_midi_path = transcribe_cloud_http(processed_path, output_dir)
+                elif is_cloud_available():
+                    raw_midi_path = transcribe_cloud(processed_path, output_dir)
+                else:
+                    raise RuntimeError("No GPU available")
+            except Exception:
                 raw_midi_path = transcribe_basic_pitch(processed_path, output_dir, quality="adaptive")
 
         # Step 5: Post-process
