@@ -1,0 +1,10 @@
+{
+  "round": 37,
+  "direction": "arrangement",
+  "verdict": "NORMAL",
+  "changes": [
+    "AI arrangement now passes through postprocess_midi for quantization + velocity smoothing",
+    "Combines Orpheus 748M creativity with rule-based polish"
+  ],
+  "next": "system (starvation=0.90)"
+}
