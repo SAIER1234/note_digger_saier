@@ -1,0 +1,8 @@
+{
+  "round": 52,
+  "direction": "quality",
+  "verdict": "NORMAL",
+  "changes": [
+    "Adaptive quantization: >160BPM\u219232nd, 100-160\u219216th, <100\u21928th"
+  ]
+}
