@@ -151,8 +151,11 @@ def generate_accompaniment(
     note_duration = beat_duration * rhythm
 
     acc_notes = []
-    prev_voicing = []  # Track previous chord's pitches for voice leading
+    prev_voicing = []
     is_waltz = (style == "waltz")
+
+    # Quality guard: minimum velocity floor + max note density
+    velocity_floor = max(35, velocity - 15)
 
     # Calculate total duration for dynamics arc
     if chords:
@@ -207,7 +210,7 @@ def generate_accompaniment(
 
                     is_downbeat = (beat_in_bar == 0)
                     base_vel = velocity + 8 if is_downbeat else velocity - 2
-                    vel = max(30, min(100, int(base_vel * arc_mult) + random.randint(-2, 2)))
+                    vel = max(velocity_floor, min(100, int(base_vel * arc_mult) + random.randint(-2, 2)))
 
                     if beat_in_bar == 0:
                         # Beat 1: bass note (root, one octave below)
