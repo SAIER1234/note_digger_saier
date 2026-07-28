@@ -78,11 +78,16 @@ export default function TranscriptionPage() {
             <Music className="absolute inset-0 m-auto w-6 h-6 text-[var(--primary)]" />
           </div>
 
-          <p className="text-sm text-[var(--text-muted)] text-center">
-            {percent < 30 && "正在分析你的音频..."}
-            {percent >= 30 && percent < 70 && "AI 正在识别音符，这可能需要几十秒..."}
-            {percent >= 70 && percent < 100 && "正在生成五线谱，马上就好..."}
-            {percent >= 100 && "处理完成！"}
+          <p className="text-sm text-[var(--text)] text-center font-medium">
+            {stageLabel || (percent < 30 ? "正在分析音频..." : percent < 70 ? "AI 识别音符中..." : percent < 100 ? "生成五线谱..." : "完成！")}
+          </p>
+          <p className="text-xs text-[var(--text-muted)] text-center mt-1">
+            {percent < 30 && "预处理音频，提取特征"}
+            {percent >= 30 && percent < 50 && "Basic Pitch / Aria-AMT 神经网络推理"}
+            {percent >= 50 && percent < 70 && "后处理优化：量化 + 力度平滑"}
+            {percent >= 70 && percent < 85 && "编曲处理中"}
+            {percent >= 85 && percent < 100 && "MusicXML 五线谱转换"}
+            {percent >= 100 && "✅ 处理完成"}
           </p>
           {result?.metadata?.duration && (
             <p className="text-xs text-[var(--text-muted)] mt-2">
