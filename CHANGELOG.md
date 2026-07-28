@@ -1,5 +1,13 @@
 # Note Digger — 迭代日志
 
+## Round 30 — 2026-07-28 [system]
+- **方向**: 系统健壮 — 结构化请求日志 + 错误追踪
+- **日志**: 每次 API 调用记录 时间/方法/路径/状态码/耗时/客户端IP
+- **存储**: backend/logs/api.log (文件) + systemd journal (控制台)
+- **system/status**: 新增 requests_today, errors (5xx/4xx), recent_errors
+- **30轮**: quality(10)·arr(9)·ux(5)·system(5)·LOW_IMPACT(2)
+- **下轮**: arrangement 或 ux（饥饿度均为0.90）
+
 ## Round 29 — 2026-07-28 [quality]
 - **方向**: 转录质量 — 智能连奏处理 (smart re-strike)
 - **方法**: 区分幽灵音(<60ms)→丢弃, 同音反复(<35%重叠)→保留双音, 重复→保留大声

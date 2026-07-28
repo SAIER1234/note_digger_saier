@@ -1,8 +1,8 @@
 {
   "loop_version": 2,
-  "round": 29,
+  "round": 30,
   "mode": "explore",
-  "last_completed": "2026-07-28T11:10:00Z",
+  "last_completed": "2026-07-28T11:30:00Z",
   "first_started": "2026-07-27T08:30:00Z",
   "directions": {
     "quality": {
@@ -10,7 +10,7 @@
       "status": "active",
       "consecutive_low_impact": 0,
       "best_f1": 0.908,
-      "notes": "R29: Smart re-strike handling. 05_fast_notes +0.037. 10-case avg 0.903 stable."
+      "notes": "R29: Smart re-strike handling. 05_fast_notes +0.037."
     },
     "arrangement": {
       "last_round": 28,
@@ -26,10 +26,10 @@
       "notes": "R27: MIDI→WAV audio synthesis + export fix."
     },
     "system": {
-      "last_round": 24,
+      "last_round": 30,
       "status": "active",
       "consecutive_low_impact": 0,
-      "notes": "R24: Disk tracking + cleanup script + memory guard."
+      "notes": "R30: Structured request logging + error tracking. system/status shows requests_today, errors, recent_errors."
     }
   },
   "current_branch_experiments": [],
