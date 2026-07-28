@@ -397,23 +397,19 @@ def _add_ending(
     # Final chord pitches in LH range
     final_pitches = [max(36, min(60, root_pc + 12 * 3 + i)) for i in intervals]
 
-    # Add final chord — block chord held for 2 beats
-    final_start = piece_end + beat_dur * 0.25  # Slight pause before ending
-    for p in final_pitches:
-        acc_notes.append(pretty_midi.Note(
-            velocity=70,
-            pitch=p,
-            start=final_start,
-            end=final_start + beat_dur * 2.0,
-        ))
+    # V-I cadence: add dominant chord before final tonic
+    v_root = (root_pc + 7) % 12
+    v_pitches = [max(36, min(60, v_root + 12 * 3 + i)) for i in [0, 4, 7]]
+    v_start = piece_end + beat_dur * 0.25
+    for p in v_pitches:
+        acc_notes.append(pretty_midi.Note(velocity=65, pitch=p, start=v_start, end=v_start + beat_dur * 1.0))
+    acc_notes.append(pretty_midi.Note(velocity=70, pitch=v_pitches[0]-12, start=v_start, end=v_start + beat_dur * 1.0))
 
-    # Add deep bass note below final chord
-    acc_notes.append(pretty_midi.Note(
-        velocity=75,
-        pitch=final_pitches[0] - 12,
-        start=final_start,
-        end=final_start + beat_dur * 2.0,
-    ))
+    # Final tonic chord
+    final_start = v_start + beat_dur * 1.25
+    for p in final_pitches:
+        acc_notes.append(pretty_midi.Note(velocity=70, pitch=p, start=final_start, end=final_start + beat_dur * 2.5))
+    acc_notes.append(pretty_midi.Note(velocity=80, pitch=final_pitches[0]-12, start=final_start, end=final_start + beat_dur * 2.5))
 
     return acc_notes
 
