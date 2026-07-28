@@ -1,5 +1,14 @@
 # Note Digger — 迭代日志
 
+## Round 24 — 2026-07-28 [system]
+- **方向**: 系统健壮 — 磁盘追踪 + 自动清理 + 内存守卫
+- **system/status**: 新增 outputs_mb / uploads_mb / old_files_count 字段
+- **cleanup_outputs.py**: 删除 >30天 旧输出，支持 --dry-run
+- **system_guard.py**: 读取 /proc/meminfo，可用 <500MB 拒绝新上传 (503)
+- **ECS cron**: 每日 3:07 AM 自动清理，与 backup_db 同时运行
+- **24轮**: quality(8)·arr(7)·ux(4)·system(4)·LOW_IMPACT(2)
+- **下轮**: ux 或 arrangement（饥饿度均为0.90）
+
 ## Round 23 — 2026-07-28 [quality] ⚠️ LOW_IMPACT
 - **方向**: 转录质量 — 自适应预设 (adaptive quality preset)
 - **方法**: librosa onset detection + spectral centroid → 自动选 high/medium
