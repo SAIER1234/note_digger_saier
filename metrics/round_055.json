@@ -1,0 +1,8 @@
+{
+  "round": 55,
+  "direction": "quality",
+  "verdict": "NORMAL",
+  "changes": [
+    "Quality stats in output metadata: removed/capped/density_removed counts"
+  ]
+}
