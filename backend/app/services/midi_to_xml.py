@@ -10,6 +10,9 @@ def midi_to_musicxml(midi_path: Path, output_path: Path | None = None, split_han
     if output_path is None:
         output_path = midi_path.with_suffix(".musicxml")
 
+    # Fix extremely long notes that break music21 (duplex-maxima error)
+    _sanitize_note_durations(midi_path)
+
     score = m21.converter.parse(str(midi_path))
 
     # Format as readable piano score
@@ -38,6 +41,24 @@ def midi_to_musicxml(midi_path: Path, output_path: Path | None = None, split_han
             raise
 
     return output_path
+
+
+def _sanitize_note_durations(midi_path: Path, max_sec: float = 32.0):
+    """Cap extremely long note durations to prevent music21 'duplex-maxima' errors."""
+    import pretty_midi
+    try:
+        midi = pretty_midi.PrettyMIDI(str(midi_path))
+        changed = False
+        for inst in midi.instruments:
+            for note in inst.notes:
+                dur = note.end - note.start
+                if dur > max_sec:
+                    note.end = note.start + max_sec
+                    changed = True
+        if changed:
+            midi.write(str(midi_path))
+    except Exception:
+        pass
 
 
 def _split_into_grand_staff(score):
