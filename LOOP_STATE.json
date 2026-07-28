@@ -1,7 +1,7 @@
 {
   "loop_version": 2,
-  "round": 33,
-  "mode": "repair",
+  "round": 35,
+  "mode": "explore",
   "last_completed": "2026-07-28T17:45:00Z",
   "first_started": "2026-07-27T08:30:00Z",
   "directions": {
@@ -10,7 +10,7 @@
       "status": "active",
       "consecutive_low_impact": 0,
       "best_f1": 0.908,
-      "notes": "R29: Smart re-strike handling."
+      "notes": "R29: Smart re-strike. Need GPU benchmark for real comparison."
     },
     "arrangement": {
       "last_round": 32,
@@ -20,20 +20,24 @@
       "notes": "R32: Orpheus 748M AI arrangement. Orpheus still healthy."
     },
     "ux": {
-      "last_round": 27,
+      "last_round": 35,
       "status": "active",
       "consecutive_low_impact": 0,
-      "notes": "R27: MIDI→WAV audio synthesis + export fix."
+      "notes": "R35: Engine+AI badges on result page."
     },
     "system": {
       "last_round": 33,
       "status": "active",
       "consecutive_low_impact": 0,
-      "notes": "R33: GPU→CPU fallback. Aria-AMT regression (torch conflict) being fixed."
+      "notes": "R33: GPU\u922b\u6256PU fallback. Aria-AMT regression (torch conflict) being fixed."
     }
   },
   "current_branch_experiments": [],
-  "deployed_ports": [8001],
+  "deployed_ports": [
+    8001
+  ],
   "gpu_deployed": true,
-  "gpu_models": ["orpheus-748M"]
+  "gpu_models": [
+    "orpheus-748M"
+  ]
 }

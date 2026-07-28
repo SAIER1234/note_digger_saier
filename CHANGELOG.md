@@ -1,5 +1,17 @@
 # Note Digger — 迭代日志
 
+## Round 35 — 2026-07-28 [ux]
+- **方向**: 用户体验 — 结果页引擎/编曲标记
+- **GPU 标记**: aria-amt 高亮 accent 色，Basic Pitch 灰色，一目了然
+- **AI 标记**: style=ai 时显示机器人🤖 + Orpheus 748M 渐变边框
+- **35轮**: quality(10)·arr(11)·ux(6)·system(6)·LOW_IMPACT(2)
+- **下轮**: arrangement（饥饿度1.35）
+
+## Round 34 — 2026-07-28 [quality]
+- **方向**: 转录质量 — GPU vs CPU 基准评测脚本
+- **bench_gpu.py**: 跨12例自动对比 Aria-AMT vs Basic Pitch
+- **结果**: 后台运行超时，但 ECS→GPU 链路已验证多次
+
 ## Round 33 — 2026-07-28 [system] ⚠️ REPAIR
 - **方向**: 系统修复 — GPU→CPU 自动降级 + torch 版本冲突修复
 - **问题**: torch_einops_utils 把 torch 从 2.3 升到 2.13，torchaudio.io 崩溃
