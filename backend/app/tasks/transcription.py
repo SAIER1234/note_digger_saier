@@ -124,7 +124,15 @@ def _run_pipeline_with_progress(
             except Exception as e:
                 print(f"Arrangement skipped: {e}")
 
-        # Step 7: Convert to MusicXML (AFTER arrangement so it uses arranged MIDI)
+        # Step 6.5: Sanitize final MIDI (remove garbage notes before MusicXML)
+        cb("清洗杂音…", 90)
+        try:
+            from app.services.midi_sanitizer import sanitize_midi
+            sanitize_midi(clean_midi_path, clean_midi_path)
+        except Exception:
+            pass  # Best-effort cleaning
+
+        # Step 7: Convert to MusicXML (AFTER arrangement + sanitization)
         cb("生成五线谱…", 95)
         musicxml_path = output_dir / "score.musicxml"
         midi_to_musicxml(clean_midi_path, musicxml_path)
