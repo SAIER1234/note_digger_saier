@@ -1,0 +1,11 @@
+{
+  "round": 42,
+  "direction": "ux",
+  "verdict": "NORMAL",
+  "changes": [
+    "ZIP download: MIDI + MusicXML + audio in one click",
+    "New /export/{id}/zip endpoint",
+    "Frontend: blue Download All button"
+  ],
+  "next": "system (starvation=0.90)"
+}

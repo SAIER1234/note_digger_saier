@@ -1,6 +1,6 @@
 {
   "loop_version": 2,
-  "round": 41,
+  "round": 42,
   "mode": "explore",
   "last_completed": "2026-07-28T17:45:00Z",
   "first_started": "2026-07-27T08:30:00Z",
@@ -20,10 +20,10 @@
       "notes": "R41: Velocity floor 35 for cleaner output."
     },
     "ux": {
-      "last_round": 35,
+      "last_round": 42,
       "status": "active",
       "consecutive_low_impact": 0,
-      "notes": "R35: Engine+AI badges on result page."
+      "notes": "R42: ZIP download all files in one click."
     },
     "system": {
       "last_round": 38,
