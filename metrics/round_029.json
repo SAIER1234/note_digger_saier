@@ -1,0 +1,23 @@
+{
+  "round": 29,
+  "direction": "quality",
+  "mode": "explore",
+  "timestamp": "2026-07-28T11:10:00Z",
+  "verdict": "NORMAL",
+  "changes": [
+    "Smart re-strike handling in _remove_overlapping_notes and _clean_midi_notes",
+    "Ghost notes (<60ms, <30 vel): discard",
+    "Re-strikes (<35% overlap, vel>=25): keep both, truncate first",
+    "Duplicates (large overlap): keep louder (existing behavior)"
+  ],
+  "benchmark": {
+    "original_10_cases_avg_f1": 0.903,
+    "baseline_10_cases": 0.908,
+    "delta_10_cases": -0.005,
+    "all_12_cases_avg_f1": 0.796,
+    "key_improvement": "05_fast_notes: 0.820 → 0.857 (+0.037)",
+    "02_arpeggio": "unchanged at 0.400 — model-level limitation, not postprocessing",
+    "verdict": "No regression on original cases. Small improvement on fast notes."
+  },
+  "next_direction": "system (starvation=1.125)"
+}
