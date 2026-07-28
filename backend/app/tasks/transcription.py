@@ -59,7 +59,7 @@ def _run_pipeline_with_progress(
             else:
                 raw_midi_path = transcribe_audio_python(processed_path, output_dir, model="medium-double")
         elif model_choice == "basic-pitch":
-            raw_midi_path = transcribe_basic_pitch(processed_path, output_dir, quality="high")
+            raw_midi_path = transcribe_basic_pitch(processed_path, output_dir, quality="adaptive")
         elif model_choice == "simple":
             raw_midi_path = transcribe_simple(processed_path, output_dir)
         else:
@@ -67,7 +67,7 @@ def _run_pipeline_with_progress(
             if is_cloud_available():
                 raw_midi_path = transcribe_cloud(processed_path, output_dir)
             else:
-                raw_midi_path = transcribe_basic_pitch(processed_path, output_dir, quality="high")
+                raw_midi_path = transcribe_basic_pitch(processed_path, output_dir, quality="adaptive")
 
         # Step 5: Post-process
         cb("优化谱面…", 70)

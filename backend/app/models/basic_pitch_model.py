@@ -4,7 +4,6 @@ Basic Pitch (Spotify, ISMIR 2022) — instrument-agnostic, polyphonic,
 works on CPU, outputs MIDI with pitch bend detection.
 
 This is the PRIMARY transcription engine for CPU-only deployments.
-Aria-AMT is used when GPU (CUDA) is available.
 """
 
 import os
@@ -13,6 +12,7 @@ from pathlib import Path
 import numpy as np
 import pretty_midi
 import soundfile as sf
+import librosa
 
 
 # Piano-optimized quality presets (tuned via benchmark grid search, Round 2)
@@ -31,7 +31,7 @@ QUALITY_PRESETS = {
         "minimum_frequency": 55.0,
         "maximum_frequency": 3520.0,
     },
-    "low": {     # More sensitive — catches more notes, may have noise
+    "low": {     # Most sensitive — catches more notes, may have noise
         "onset_threshold": 0.5,
         "frame_threshold": 0.3,
         "minimum_note_length": 58.0,
@@ -41,10 +41,71 @@ QUALITY_PRESETS = {
 }
 
 
+def analyze_audio_density(audio_path: Path) -> dict:
+    """Pre-analyze audio to determine note density for adaptive preset selection.
+
+    Uses onset detection + spectral analysis. Lightweight — runs in ~1s for
+    a 30s audio clip at 22050Hz mono.
+
+    Returns dict with onsets_per_second, duration, density classification.
+    """
+    y, sr = librosa.load(str(audio_path), sr=22050, mono=True)
+    duration = len(y) / sr if sr > 0 else 0
+
+    if duration < 0.5:
+        return {"onsets_per_second": 0, "duration": duration, "density": "sparse"}
+
+    # Onset detection — count note attacks
+    onset_frames = librosa.onset.onset_detect(
+        y=y, sr=sr,
+        units='frames',
+        hop_length=512,
+        backtrack=True,
+    )
+    onsets_per_second = len(onset_frames) / duration if duration > 0 else 0
+
+    # Spectral centroid — higher = brighter timbre = more harmonic content
+    spectral = np.abs(librosa.stft(y, n_fft=2048, hop_length=512))
+    centroid = float(librosa.feature.spectral_centroid(S=spectral, sr=sr).mean())
+
+    # Density classification
+    if onsets_per_second > 10:
+        density = "fast"       # Rapid passages — need sensitive detection
+    elif onsets_per_second > 5:
+        density = "normal"     # Moderate tempo
+    else:
+        density = "sparse"     # Slow/sparse — prioritize precision over recall
+
+    return {
+        "onsets_per_second": round(onsets_per_second, 1),
+        "duration": round(duration, 1),
+        "spectral_centroid_hz": round(centroid, 0),
+        "density": density,
+    }
+
+
+def select_quality_preset(audio_path: Path) -> str:
+    """Select best quality preset based on audio characteristics.
+
+    - fast (>10 onsets/s):  'medium' — lower threshold, shorter min note (50ms)
+    - normal (5-10/s):      'high'   — balanced, good precision
+    - sparse (<5/s):        'high'   — prioritize clean output over recall
+
+    Falls back to 'high' on any analysis error.
+    """
+    try:
+        info = analyze_audio_density(audio_path)
+        if info["density"] == "fast":
+            return "medium"
+        return "high"
+    except Exception:
+        return "high"
+
+
 def transcribe_basic_pitch(
     audio_path: Path,
     output_dir: Path,
-    quality: str = "high",
+    quality: str = "adaptive",
     onset_threshold: float | None = None,
     frame_threshold: float | None = None,
     minimum_note_length: float | None = None,
@@ -57,7 +118,7 @@ def transcribe_basic_pitch(
     Args:
         audio_path: Path to preprocessed audio
         output_dir: Output directory
-        quality: Preset: 'high' (cleanest), 'medium' (balanced), 'low' (most notes)
+        quality: Preset: 'adaptive' (auto-select, default), 'high', 'medium', 'low'
         onset_threshold: Override — higher = fewer notes (0.3-0.9)
         frame_threshold: Override — higher = less noise (0.2-0.6)
         minimum_note_length: Override — min ms per note
@@ -67,6 +128,10 @@ def transcribe_basic_pitch(
     Returns:
         Path to output MIDI file
     """
+    # Adaptive quality: analyze audio first, then pick preset
+    if quality == "adaptive":
+        quality = select_quality_preset(audio_path)
+
     # Apply quality preset, allow overrides
     preset = QUALITY_PRESETS.get(quality, QUALITY_PRESETS["medium"])
     onset = onset_threshold if onset_threshold is not None else preset["onset_threshold"]
@@ -74,6 +139,7 @@ def transcribe_basic_pitch(
     min_len = minimum_note_length if minimum_note_length is not None else preset["minimum_note_length"]
     min_freq = minimum_frequency if minimum_frequency is not None else preset["minimum_frequency"]
     max_freq = maximum_frequency if maximum_frequency is not None else preset["maximum_frequency"]
+
     from basic_pitch.inference import predict
     from basic_pitch import ICASSP_2022_MODEL_PATH
 
@@ -123,9 +189,5 @@ def transcribe_basic_pitch_multitrack(
     output_dir: Path,
     **kwargs,
 ) -> Path:
-    """
-    Transcribe multi-instrument audio using Basic Pitch.
-    Handles polyphonic audio reasonably well.
-    """
-    # Basic Pitch is instrument-agnostic, so we pass through directly
+    """Transcribe multi-instrument audio using Basic Pitch."""
     return transcribe_basic_pitch(audio_path, output_dir, **kwargs)
