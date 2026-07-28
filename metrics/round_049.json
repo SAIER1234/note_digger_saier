@@ -1,0 +1,8 @@
+{
+  "round": 49,
+  "direction": "quality",
+  "verdict": "NORMAL",
+  "changes": [
+    "Adaptive chord window: 120/tempo, clamped 0.5-2.0 beats"
+  ]
+}
