@@ -436,12 +436,19 @@ def arrange_piano(
     }
     acc_velocity = velocity_map.get(difficulty, 65)
 
-    # AI mode: call Orpheus 748M GPU server
+    # AI mode: call Orpheus 748M GPU server, then polish with rule-based postprocessing
     if style == "ai":
         from app.models.cloud_amt import arrange_cloud_ai, is_orpheus_available
         if is_orpheus_available():
             try:
-                return arrange_cloud_ai(midi_path, output_path)
+                ai_path = arrange_cloud_ai(midi_path, output_path)
+                # Apply rule-based polish: quantization + velocity smoothing
+                from app.models.postprocess import postprocess_midi
+                polished_path = output_path.replace(".mid", "_polished.mid") if isinstance(output_path, str) else str(output_path).replace(".mid", "_polished.mid")
+                postprocess_midi(Path(ai_path) if isinstance(ai_path, str) else ai_path, Path(polished_path))
+                import shutil
+                shutil.move(polished_path, ai_path if isinstance(ai_path, str) else str(ai_path))
+                return ai_path if isinstance(ai_path, str) else str(ai_path)
             except Exception:
                 pass  # Fall through to rule-based
         # If AI unavailable, fall through to broken style
