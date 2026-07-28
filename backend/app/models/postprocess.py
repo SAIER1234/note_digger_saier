@@ -124,17 +124,43 @@ def postprocess_midi(
 def _remove_overlapping_notes(
     notes: list[pretty_midi.Note],
 ) -> list[pretty_midi.Note]:
-    """Remove notes that overlap with higher-velocity notes of the same pitch."""
+    """Smart overlap removal: distinguish ghost notes, re-strikes, and duplicates.
+
+    - Ghost note: very short (<60ms) & quiet (<30 vel) → discard
+    - Re-strike: small overlap (<35% of earlier note) & decent velocity → keep both,
+      truncate the earlier note's end so they don't truly overlap
+    - Duplicate: large overlap → standard behaviour, keep the louder one
+    """
     notes = sorted(notes, key=lambda n: (n.pitch, n.start, -n.velocity))
     cleaned = []
     for note in notes:
         if cleaned and cleaned[-1].pitch == note.pitch:
-            # Check overlap
-            if note.start < cleaned[-1].end:
-                # Keep the louder one
-                if note.velocity > cleaned[-1].velocity:
+            prev = cleaned[-1]
+            prev_duration = prev.end - prev.start
+            overlap = prev.end - note.start
+
+            # Ghost note: very short and quiet → discard
+            note_duration = note.end - note.start
+            if note_duration < 0.06 and note.velocity < 30:
+                continue
+
+            # Check if overlap is small enough for re-strike
+            overlap_ratio = overlap / prev_duration if prev_duration > 0 else 1.0
+
+            if overlap_ratio < 0.35 and note.velocity >= 25:
+                # Re-strike: truncate the earlier note slightly, keep both
+                cleaned[-1].end = note.start - 0.005  # 5ms gap
+                if cleaned[-1].end <= cleaned[-1].start:
+                    cleaned[-1] = note  # Replace if truncation makes zero-length
+                else:
+                    cleaned.append(note)
+                continue
+            else:
+                # Large overlap — model duplicate, keep the louder one
+                if note.velocity > prev.velocity:
                     cleaned[-1] = note
                 continue
+
         cleaned.append(note)
     return cleaned
 

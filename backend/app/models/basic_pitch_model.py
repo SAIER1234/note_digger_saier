@@ -165,7 +165,13 @@ def transcribe_basic_pitch(
 
 
 def _clean_midi_notes(midi_data, min_duration: float = 0.07, min_velocity: int = 15):
-    """Remove likely noise from Basic Pitch output."""
+    """Remove likely noise from Basic Pitch output.
+
+    Smart overlap handling:
+    - Ghost notes (<60ms, <30 vel) → discard
+    - Re-strikes (small overlap, decent velocity) → keep both with truncation
+    - Duplicates (large overlap) → keep the louder one
+    """
     for instrument in midi_data.instruments:
         if instrument.is_drum:
             instrument.notes = []
@@ -174,13 +180,34 @@ def _clean_midi_notes(midi_data, min_duration: float = 0.07, min_velocity: int =
         filtered = []
         for note in sorted(instrument.notes, key=lambda n: (n.pitch, n.start)):
             duration = note.end - note.start
+
+            # Ghost note: very short and quiet
+            if duration < 0.06 and note.velocity < 30:
+                continue
+            # General quality filter
             if duration < min_duration or note.velocity < min_velocity:
                 continue
+
             if filtered and filtered[-1].pitch == note.pitch:
-                if note.start < filtered[-1].end:
-                    if note.velocity > filtered[-1].velocity:
+                prev = filtered[-1]
+                prev_dur = prev.end - prev.start
+                overlap = prev.end - note.start
+                overlap_ratio = overlap / prev_dur if prev_dur > 0 else 1.0
+
+                if overlap_ratio < 0.35 and note.velocity >= 25:
+                    # Re-strike in legato playing — keep both
+                    prev.end = max(note.start - 0.005, prev.start)
+                    if prev.end > prev.start:
+                        filtered.append(note)
+                    else:
+                        filtered[-1] = note  # Truncation made zero-length
+                    continue
+                else:
+                    # Duplicate — keep louder
+                    if note.velocity > prev.velocity:
                         filtered[-1] = note
                     continue
+
             filtered.append(note)
         instrument.notes = filtered
 
