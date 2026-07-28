@@ -47,6 +47,11 @@ CHORD_PATTERNS = {
     "aug":  [0, 4, 8],      # augmented
 }
 
+STYLES["piano"] = {
+    "name": "钢琴独奏",
+    "pattern": [0, 1, 2, 3, 2, 1],  # Wide broken chord
+    "rhythm": 0.375,  # Triplet feel
+}
 # AI mode
 STYLES["ai"] = {
     "name": "AI 智能编曲",

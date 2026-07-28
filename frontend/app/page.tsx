@@ -215,6 +215,7 @@ export default function Home() {
               className="bg-[var(--surface-light)] text-xs text-[var(--text)] px-2 py-1 rounded border border-[var(--surface-light)] cursor-pointer"
               title="编曲风格"
             >
+              <option value="piano">🎹 钢琴独奏</option>
               <option value="broken">分解和弦</option>
               <option value="arpeggio">琶音</option>
               <option value="block">柱式和弦</option>
