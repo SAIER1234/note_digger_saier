@@ -173,6 +173,13 @@ def generate_accompaniment(
         chord_name = chord_info["chord"]
         start_time = chord_info["start"]
         end_time = chord_info["end"]
+        chord_dur = end_time - start_time
+
+        # Adaptive density: short chords → simpler pattern
+        if chord_dur < 1.5 and style != "waltz" and style != "block":
+            effective_pattern = [0, 1]  # Just root + third
+        else:
+            effective_pattern = pattern
 
         # Parse chord root and quality
         known_suffixes = ["maj7", "m7b5", "m7", "m6", "m", "sus4", "dim", "aug", "7", "6"]
@@ -246,7 +253,7 @@ def generate_accompaniment(
             chord_notes_played = []  # Track notes played in this chord for voice leading
 
             while t < end_time:
-                step = pattern[pattern_idx % len(pattern)]
+                step = effective_pattern[pattern_idx % len(effective_pattern)]
                 if step < len(chord_voicing):
                     midi_pitch = chord_voicing[step]
                     chord_notes_played.append(midi_pitch)
