@@ -226,8 +226,9 @@ def generate_accompaniment(
                     vel = max(velocity_floor, min(100, int(base_vel * arc_mult) + random.randint(-2, 2)))
 
                     if beat_in_bar == 0:
-                        # Beat 1: bass note (root, one octave below)
-                        bass_pitch = chord_voicing[0] - 12
+                        # Beat 1: alternate root and fifth for musical bass
+                        bar_num = int(t / (beat_duration * 3))
+                        bass_pitch = chord_voicing[0] - 12 if bar_num % 2 == 0 else chord_voicing[1] - 12 if len(chord_voicing) > 1 else chord_voicing[0] - 12
                         acc_notes.append(pretty_midi.Note(
                             velocity=vel, pitch=max(24, bass_pitch),
                             start=beat_time,
