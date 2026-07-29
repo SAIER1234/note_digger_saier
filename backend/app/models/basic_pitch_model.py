@@ -164,7 +164,7 @@ def transcribe_basic_pitch(
     return output_path
 
 
-def _clean_midi_notes(midi_data, min_duration: float = 0.07, min_velocity: int = 15):
+def _clean_midi_notes(midi_data, min_duration: float = 0.05, min_velocity: int = 15):
     """Remove likely noise from Basic Pitch output.
 
     Smart overlap handling:
