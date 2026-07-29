@@ -73,10 +73,10 @@ def postprocess_midi(
             instrument.notes = [
                 n for n in instrument.notes if n.velocity > threshold
             ]
-            # Smooth extreme velocities
-            p90 = np.percentile(velocities, 90)
+            # Normalize: cap at p95, floor at max(15, p10*0.5)
+            p95 = int(np.percentile(velocities, 95))
             for n in instrument.notes:
-                n.velocity = int(np.clip(n.velocity, 15, min(127, p90 * 1.2)))
+                n.velocity = int(np.clip(n.velocity, 15, p95))
 
         # Isolated weak note filter: remove notes played alone with low velocity
         for instrument in midi.instruments:
