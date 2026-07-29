@@ -100,6 +100,7 @@ export default function TranscriptionPage() {
           {result?.metadata?.duration && (
             <p className="text-xs text-[var(--text-muted)] mt-2">
               音频时长: {formatDuration(result.metadata.duration)}
+              {result.metadata.duration > 30 ? " · 预计1-2分钟" : " · 预计30-60秒"}
             </p>
           )}
         </div>
