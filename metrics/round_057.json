@@ -1,0 +1,8 @@
+{
+  "round": 57,
+  "direction": "arrangement",
+  "verdict": "NORMAL",
+  "changes": [
+    "Octave doubling for loud melody notes (vel>80)"
+  ]
+}
