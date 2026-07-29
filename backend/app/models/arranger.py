@@ -484,13 +484,19 @@ def arrange_piano(
 
     # Create output MIDI
     out_midi = pretty_midi.PrettyMIDI()
-    # RH: melody + harmony
+    # RH: melody + harmony + octave doubling
     rh_track = pretty_midi.Instrument(program=0, name="Right Hand")
     for n in melody_notes:
         rh_track.notes.append(pretty_midi.Note(
             velocity=n.velocity, pitch=n.pitch,
             start=n.start, end=n.end,
         ))
+        # Octave doubling for loud melody notes (velocity > 80)
+        if n.velocity > 80 and n.pitch + 12 <= 108:
+            rh_track.notes.append(pretty_midi.Note(
+                velocity=int(n.velocity * 0.7), pitch=n.pitch + 12,
+                start=n.start, end=n.end,
+            ))
     # Add harmony notes (thirds/sixths below melody)
     for n in harmony_notes_from_chord:
         rh_track.notes.append(n)
