@@ -81,9 +81,21 @@ async def root():
     return {"service": "Note Digger", "version": "0.1.0", "status": "running"}
 
 
+# Try to read git commit for version tracking
+import subprocess as _subprocess
+_APP_VERSION = "unknown"
+try:
+    r = _subprocess.run(["git", "rev-parse", "--short", "HEAD"],
+                        capture_output=True, text=True, cwd=str(BASE_DIR))
+    if r.returncode == 0:
+        _APP_VERSION = r.stdout.strip()
+except Exception:
+    pass
+
+
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy", "version": _APP_VERSION}
 
 
 @app.get(f"{API_PREFIX}/health")
